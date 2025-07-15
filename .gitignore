@@ -6,6 +6,9 @@ venv/
 env/
 .env/
 
+# Archivos para paquetes
+__init__.*
+
 # Archivos de Python compilados
 __pycache__/
 *.pyc
