@@ -1,0 +1,13 @@
+# Entornos Virtuales
+marketScorer/
+
+# Archivos para paquetes
+__init__.*
+
+# Archivos de Python compilados
+__pycache__/
+
+# Herramientas de testing
+.coverage
+htmlcov/
+.pytest_cache/
