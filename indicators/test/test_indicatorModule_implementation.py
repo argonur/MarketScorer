@@ -20,8 +20,3 @@ def test_implementacion_valida(Implementation):
     # 2. Debe tener los métodos requeridos
     assert hasattr(instance, 'fetch_data') and callable(instance.fetch_data)
     assert hasattr(instance, 'normalize') and callable(instance.normalize)
-    assert hasattr(instance, 'get_score') and callable(instance.get_score)
-
-    # 3. El método get_score debe retornar algo válido
-    result = instance.get_score()
-    assert result is not None

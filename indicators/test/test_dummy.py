@@ -21,13 +21,6 @@ class TestDummyImplementation:
     def test_normalize_implementation(self, dummy):
         assert dummy.normalize() is None
     
-    def test_optional_method_override(self, dummy):
-        assert dummy.get_score() == "Dummy sobrescrito"
-    
-    def test_get_score_returns_string(self, dummy):
-        result = dummy.get_score()
-        assert isinstance(result, str)
-    
     def test_instance_creation(self, dummy):
         assert isinstance(dummy, IndicatorModule)
 

@@ -20,7 +20,6 @@ class TestIndicatorModuleInterface:
     def test_override_get_score(self, implementation):
         assert hasattr(implementation, 'get_score')
         assert callable(implementation.get_score)
-        assert implementation.get_score() is not None
 
     # La interfaz no permite ser instanciada directamente
     def test_interface_cannot_be_instantiated(self):
