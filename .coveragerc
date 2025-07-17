@@ -1,0 +1,13 @@
+[run]
+omit =
+    tests/run_tests.py
+    */__init__.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    if typing.TYPE_CHECKING
+
+[html]
+directory = htmlcov
