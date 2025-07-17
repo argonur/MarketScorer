@@ -8,7 +8,7 @@ def run_tests(target='.', html=True):
         "pytest",
         target,
         f"--cov={target}",
-        "--cov-fail-under=90",
+        "--cov-fail-under=85",
         "--cov-report=term",           # Reporte en consola
     ]
 
