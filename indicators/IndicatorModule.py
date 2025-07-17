@@ -8,7 +8,7 @@ class IndicatorModule(ABC):
     @abstractclassmethod
     def fetch_data(self):
         """ Obtiene los datos necesarios para el indicador. """
-        pass
+    pass
 
     @abstractclassmethod
     def normalize(self):
