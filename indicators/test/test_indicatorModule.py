@@ -1,5 +1,6 @@
 import pytest
 from abc import ABC, abstractclassmethod
+from indicators.IndicatorModule import IndicatorModule
 
 # Pruebas que aplican a TODAS las clases que implementan la interfaz
 class TestIndicatorModuleInterface:
@@ -20,3 +21,12 @@ class TestIndicatorModuleInterface:
         assert hasattr(implementation, 'get_score')
         assert callable(implementation.get_score)
         assert implementation.get_score() is not None
+
+    # La interfaz no permite ser instanciada directamente
+    def test_interface_cannot_be_instantiated(self):
+        from indicators.IndicatorModule import IndicatorModule
+        with pytest.raises(TypeError):
+            IndicatorModule()
+    
+    def test_subclass_implements_all_required_methods(self, implementation):
+        assert isinstance(implementation, IndicatorModule)
