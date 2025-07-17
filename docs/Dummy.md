@@ -5,6 +5,23 @@ Se compone por lo siguiente:
 1. Importa el paquete IndicatorModule como `from IndicatorModule import IndicatorModule`
 2. Hereda de la interfaz `IndicatorModule`
 
+- La clase dummy cumple con la promesa de la interfaz de implementar sus metodos abstractos
+
+```python
+from indicators.IndicatorModule import IndicatorModule
+
+class Dummy(IndicatorModule):
+
+    def fetch_data(self):          # Metodo abstracto
+        pass
+
+    def normalize(self):           # Metodo abstracto
+        return None
+
+    def get_score(self):           # Metodo no abstracto, opcional
+        return "Dummy sobrescrito"
+```
+
 # Estructura del test para el Dummy
 
 1. Como el directorio de los tests se encuentra al mismo nivel que los modulos (`/indicators/`) se debe especificar la ruta del paquete junto al Modulo, Clase o Interfaz.
