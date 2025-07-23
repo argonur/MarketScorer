@@ -43,6 +43,20 @@ def test_valores_fuera_de_rango_lanza_excepcion(valor_fuera_de_rango):
     resultado = indicador.fetch_data()
     assert resultado is None # Porque la excepcion se atrapa dentro de la clase y entonces devuelve un None en el Exception
 
+# Valores invalidos manejados por normalize
+@pytest.mark.parametrize("valor_invalido", [-1, 101, None])
+def test_normalize_con_valores_invalidos(valor_invalido):
+    class MockFGI:
+        def __init__(self, value): self.value = value
+        description = "Test"
+        last_update = "2025-07-22"
+
+    fetch_mock = lambda: MockFGI(valor_invalido)
+    indicator = FearGreedIndicator(fetch_fn=fetch_mock)
+
+    score = indicator.normalize()
+    assert score == 0
+
 # Valores validos esperados, dentro del rango
 @pytest.mark.parametrize("valor, esperado", [
     (75, 0.75),
@@ -53,7 +67,7 @@ def test_valores_fuera_de_rango_lanza_excepcion(valor_fuera_de_rango):
     (0, 0.0)
 ])
 def test_normalize_parametrizado(valor, esperado):
-    mock_fgi = MagicMock
+    mock_fgi = MagicMock()
     mock_fgi.value = valor
     mock_fgi.description = "mock"
     mock_fgi.last_update = "2025-07-21"
