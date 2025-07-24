@@ -1,3 +1,4 @@
 fear-and-greed==0.4
 pytest==8.4.1
 pytest-cov==6.2.1
+pytest-html==4.1.1
