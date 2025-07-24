@@ -1,16 +1,16 @@
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractmethod
 class IndicatorModule(ABC):
     """
     Clase abstracta para todos los indicadores.
     Es la interfaz que deben implementar.
     """
 
-    @abstractclassmethod
+    @abstractmethod
     def fetch_data(self):
         """ Obtiene los datos necesarios para el indicador. """
     pass
 
-    @abstractclassmethod
+    @abstractmethod
     def normalize(self):
         """ 
         - Procesa los datos obtenidos y los transforma en valores entre 0 y 1.
