@@ -1,5 +1,28 @@
 # MarketScorer
 
+## Requisitos previos
+
+Antes de comenzar a desarrollar o ejecutar test de nuestro proyecto debemos:
+
+1. Crear un entorno virtual (donde se instalaran las dependencias que necesita el proyecto)
+
+```bash
+python3 -m venv venv  # Esto crea un entorno llamado "venv"
+```
+
+2. Activar el entorno virtual
+
+```bash
+source venv/bin/activate
+# Tu terminal mostrará algo como: (venv) usuario@macbook ...
+```
+
+3. Instalar las dependencias desde requirements.txt con el comando:
+
+```bash
+pip install -r requirements.txt
+```
+
 # Ejecutar tests, coverage y reporte HTML
 
 - Para ejecutar tests y coverage de todo el sistema ejecutar el siguiente comando desde la raíz del proyecto:
