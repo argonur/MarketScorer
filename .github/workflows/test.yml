@@ -1,0 +1,26 @@
+name: Tests y Coverage Local Actions
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: ⬇️ Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: 🐍 Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 📦 Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🧪 Ejecutar pruebas y coverage
+        run: |
+          mkdir -p htmlcov/reports
+          python tests/run_tests.py
