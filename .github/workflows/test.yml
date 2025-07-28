@@ -1,0 +1,19 @@
+name: Tests y Coverage Local Actions
+
+on: [push, pull_request]
+
+env:
+  NPROC: 4
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: dyeosvaldoperalta/marketscorer:1.1
+
+    steps:
+      - name: ⬇️ Clonar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: 🧪 Ejecutar pruebas
+        run: python tests/run_tests.py
