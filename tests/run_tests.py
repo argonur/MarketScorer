@@ -1,5 +1,7 @@
 import sys
+import os
 import subprocess
+import argparse
 
 def run_tests(target='.'):
     """Ejecuta pytest con cobertura, ya sea para un paquete o para todo el sistema."""
@@ -23,10 +25,11 @@ def run_tests(target='.'):
 
 # Constructor el cual nos permite pasarle un target path individual a testear desde la terminal
 if __name__ == "__main__":
-    # Lee argumentos de línea de comandos
-    if len(sys.argv) > 1:
-        paquete = sys.argv[1]
-    else:
-        paquete = "."  # Todo el sistema por defecto
+    # Agrega la raíz del proyecto al sys.path
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-    run_tests(target=paquete)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("target", help="Paquete o archivo de tests a ejecutar", nargs='?', default='.')
+    args = parser.parse_args()
+
+    run_tests(target=args.target)
