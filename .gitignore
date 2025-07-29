@@ -2,7 +2,6 @@
 marketScorer/
 
 # Archivos para paquetes
-core/__init__.*
 config/__init__.*
 
 # Archivos de Python compilados
