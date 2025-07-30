@@ -1,4 +1,4 @@
-name: Tests y Coverage Local Actions
+name: Local Actions - Market Scorer
 
 on: [push, pull_request]
 
@@ -7,7 +7,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     container:
       image: dyeosvaldoperalta/marketscorer:1.1
 
