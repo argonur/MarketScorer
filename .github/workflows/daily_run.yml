@@ -7,7 +7,7 @@ on:
     branches: ["*"]
   workflow_dispatch:
   schedule:
-    - cron: "0 12 * * 1-5" # Daily at 12:00 UTC
+    - cron: "30 06 * * 2-6" # Daily at 06:30 AM UTC
 
 jobs:
   test:
@@ -22,7 +22,8 @@ jobs:
       - name: 🧪 Ejecutar pruebas y coverage
         run: |
           mkdir -p htmlcov/reports
-          python tests/run_tests.py indicators/
+          python tests/run_tests.py
+          python -m core.scoreCalculator
 
       - name: 📁 Subir reportes como artifacts
         uses: actions/upload-artifact@v4

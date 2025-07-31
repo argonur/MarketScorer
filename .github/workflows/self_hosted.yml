@@ -16,4 +16,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 🧪 Ejecutar pruebas
-        run: python tests/run_tests.py
+        run: |
+          python tests/run_tests.py
+          python -m core.scoreCalculator
