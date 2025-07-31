@@ -21,7 +21,11 @@ def run_tests(target='.'):
     ]
 
     print(f"\n▶ Ejecutando pruebas en: {target}\n")
-    subprocess.run(cmd)
+    result = subprocess.run(cmd)
+    if result.returncode != 0:
+        print(f"❌ Las pruebas fallaron o la cobertura está por debajo del 70%")
+        sys.exit(result.returncode)
+    print("✅ Pruebas completadas con éxito y cobertura suficiente.")
 
 # Constructor el cual nos permite pasarle un target path individual a testear desde la terminal
 if __name__ == "__main__":

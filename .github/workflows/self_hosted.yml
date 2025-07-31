@@ -1,4 +1,4 @@
-name: Tests y Coverage Local Actions
+name: Local Actions - Market Scorer
 
 on: [push, pull_request]
 
@@ -7,7 +7,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted]
     container:
       image: dyeosvaldoperalta/marketscorer:1.1
 
@@ -16,4 +16,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 🧪 Ejecutar pruebas
-        run: python tests/run_tests.py
+        run: |
+          python tests/run_tests.py
+          python -m core.scoreCalculator
