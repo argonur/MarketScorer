@@ -7,8 +7,18 @@ Se establece con `workflow_dispatch` y el horario de ejecucion automatico con `s
 ```powershell
   workflow_dispatch:
   schedule:
-    - cron: "0 12 * * 1-5" # Daily at 12:00 UTC Lunes a Viernes
+    - cron: "30 06 * * 2-6" # Daily at 06:30 AM UTC
 ```
+
+Explicación de la sintaxis cron:
+
+- `30 06 * * 2-6` significa:
+- `30`: Minuto 30 (0 significa en punto)
+- `06`: Hora 06 (6 AM en formato 24h)
+- `*`: Cualquier día del mes
+- `*`: Cualquier mes
+- `2-6`: Días de la semana (2 = Martes, 6 = Sábado)
+- GitHub Actions usa UTC por defecto
 
 Esto nos permitirá ejecutar el workflow manualmente desde Github Actions, te aparecerá un botón que dirá `Run Workflow` junto al selector de ramas.
 
@@ -20,11 +30,9 @@ Por ejemplo en el paso **Ejecutar pruebas y coverage** puedes personalizar a que
 
 ```yaml
 # Actualmente se encuentra asi
-      - name: 🧪 Ejecutar pruebas y coverage
-        run: |
-          mkdir -p htmlcov/reports
-          python tests/run_tests.py indicators/ # Puedes modificar esta linea por:
-          
-			    python tests/run_test.py core/       # Ejecuta test y coverage del paquete core
-			    python tests/run_test.py           # Ejecuta test y coverage de todo el sistema
+- name: 🧪 Ejecutar pruebas y coverage
+  run: |
+    mkdir -p htmlcov/reports
+    python tests/run_tests.py             # Ejecuta los tests de todo el sistema
+    python -m core.scoreCalculator        # Ejecuta el script de scoreCalculator y muestra el resultado
 ```
