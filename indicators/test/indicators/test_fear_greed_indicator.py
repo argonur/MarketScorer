@@ -13,7 +13,7 @@ def test_fetch_data_valida(fetch_ok):
 
 def test_normalize_valido(fetch_ok):
     indicador = FearGreedIndicator(fetch_fn=fetch_ok)
-    assert indicador.normalize() == 0.7
+    assert indicador.normalize() == 0.3
 
 ######################### Test intermedios para FearGreedIndicator #########################
 
@@ -59,12 +59,12 @@ def test_normalize_con_valores_invalidos(valor_invalido):
 
 # Valores validos esperados, dentro del rango
 @pytest.mark.parametrize("valor, esperado", [
-    (75, 0.75),
-    (55, 0.55),
-    (25, 0.25),
-    (20, 0.2),
-    (100, 1.0),
-    (0, 0.0)
+    (75, 0.25),
+    (55, 0.45),
+    (25, 0.75),
+    (20, 0.80),
+    (100, 0.0),
+    (0, 1.0)
 ])
 def test_normalize_parametrizado(valor, esperado):
     mock_fgi = MagicMock()
@@ -74,5 +74,15 @@ def test_normalize_parametrizado(valor, esperado):
 
     indicador = FearGreedIndicator(fetch_fn=lambda: mock_fgi)
     assert indicador.normalize() == esperado
+
+# Test para comprobar el comportamiento del indicador despues del nuevo calculo
+def test_normalize_valor_medio():
+    mock_fgi = MagicMock()
+    mock_fgi.value = 50
+    mock_fgi.description = "mock"
+    mock_fgi.last_update = "2025-07-21"
+
+    indicador = FearGreedIndicator(fetch_fn=lambda: mock_fgi)
+    assert indicador.normalize() == 0.5  # (100 - 50) / 100
 
 # Se pueden agregar test parametrizados para normalize fuera de rango como en fetch_data
