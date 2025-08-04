@@ -1,13 +1,15 @@
 name: Local Actions - Market Scorer
 
-on: [push, pull_request]
+# Solo se activa manualmente
+on:
+  workflow_dispatch: {}
 
 env:
   NPROC: 4
 
 jobs:
   test:
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, local]
     container:
       image: dyeosvaldoperalta/marketscorer:1.1
 
