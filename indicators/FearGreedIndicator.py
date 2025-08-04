@@ -28,7 +28,7 @@ class FearGreedIndicator(IndicatorModule):
     def normalize(self):  
         data = self.fetch_data()
         if data and data.value is not None:
-            return data.value.__round__() / 100 # Para obtener un numero entre 0 y 1 en decimal
+            return (100 - data.value.__round__()) / 100 # Para obtener un numero entre 0 y 1 en decimal
         return 0
 
 if __name__ == "__main__":
