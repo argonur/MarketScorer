@@ -1,6 +1,9 @@
-from typing import Callable, List, Dict, Any
+from typing import Callable, List, Dict
 from indicators.IndicatorModule import IndicatorModule
 from indicators.FearGreedIndicator import FearGreedIndicator
+from config.config_loader import get_config
+
+config = get_config() # Obtener la configuración
 
 class ScoreCalculator:
     def __init__(self, indicators: List[IndicatorModule], weights: Dict[str, float], scorer_fn: Callable[[IndicatorModule], float] = None):
@@ -26,6 +29,9 @@ class ScoreCalculator:
 
             weight = self.weights[name]
 
+            if weight == 404:
+                raise ValueError(f"❌ Hubo un problema al cargar los pesos desde Configuracion Global")
+
             if weight <= 0:
                 raise ValueError(f"El peso para: '{name}' debe ser mayor que cero (actual: {weight})")
             
@@ -48,23 +54,39 @@ class ScoreCalculator:
 
         return score_final / total_weight
 
-        
+def valid_weight(param):
+    """Obtienemos el peso de un indicador desde la configuración global"""
+    try:
+        weights = config.get('weights', {})
+
+        # Verifico si el parametro existe en los pesos
+        if param in weights:
+            return weights[param]
+        else:
+            print(f"⚠️ Peso no encontrado para indicador: {param}")
+            return 404
+    except Exception as e:
+        print(f"❌ Error crítico en la configuración: {str(e)}")
+        return 500
+
+
 ### Programa principal ###
 if __name__ == "__main__":
     fear_greed = FearGreedIndicator()
+    fearGreed_weight = valid_weight('fear_greed')
 
     #Lista de indicadores
     indicadores = [fear_greed]
-
-    #Pesos manuales
-    pesos = {
-        "FearGreedIndicator": 1.0
+    
+    #Pesos obtenidos desde la configuración global
+    pesos = { 
+        "FearGreedIndicator": fearGreed_weight
     }
 
     # Calculadora Score
     try:
         calculator = ScoreCalculator(indicadores, pesos)
         total = calculator.calculate_score()
-        print(f"Score final: {total:.1f}")
+        print(f"Score final: {total:.0f}")
     except Exception as e:
-        print(f"[Error en el calculo del score]:\n{e}")
+        print(f"❌ Error crítico en la configuración\n{e}")
