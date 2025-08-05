@@ -1,8 +1,9 @@
 from multiprocessing import Value
 import pytest
 from unittest.mock import MagicMock
+from unittest import mock
 
-from core.scoreCalculator import ScoreCalculator
+from core.scoreCalculator import ScoreCalculator, valid_weight
 
 # Casos validos
 def test_score_calculator_valid():
@@ -76,4 +77,34 @@ def test_score_out_of_range_raises_error():
     weights = {"MagicMock": 1.0}
 
     with pytest.raises(ValueError, match="Score fuera de rango"):
+        ScoreCalculator(indicators, weights).calculate_score()
+
+###### Errores con la Configuracion Global
+def test_weights_by_global_configuration():
+    mock_indicator = MagicMock()
+    mock_indicator.get_score.return_value = 1.0
+    indicators = [mock_indicator]
+    weights = {"MagicMock": 404} # 404 es el codigo de error que se obtiene si se solicita un peso que no existe
+
+    with pytest.raises(ValueError, match="Hubo un problema al"):
+        ScoreCalculator(indicators, weights).calculate_score()
+
+def test_valid_weights():
+    mock_indicator = MagicMock()
+    mock_indicator.get_score.return_value = 0.43
+    indicators = [mock_indicator]
+    valid_weights_config = valid_weight('fear_greed')
+    weights = {"MagicMock": valid_weights_config }
+
+    calculator = ScoreCalculator(indicators, weights)
+    assert calculator.calculate_score() == 43.0
+
+def test_wrong_weights():
+    mock_indicator = MagicMock()
+    mock_indicator.get_score.return_value = 0.43
+    indicators = [mock_indicator]
+    valid_weights_config = valid_weight('spx')
+    weights = {"MagicMock": valid_weights_config }
+
+    with pytest.raises(ValueError, match="Hubo un problema al"):
         ScoreCalculator(indicators, weights).calculate_score()
