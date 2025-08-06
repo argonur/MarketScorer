@@ -2,7 +2,6 @@
 marketScorer/
 
 # Archivos para paquetes
-config/__init__.*
 
 # Archivos de Python compilados
 __pycache__/
@@ -11,3 +10,6 @@ __pycache__/
 .coverage
 htmlcov/
 .pytest_cache/
+
+# Archivos temporales
+data/temp/*.json

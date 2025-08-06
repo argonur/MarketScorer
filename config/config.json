@@ -1,0 +1,19 @@
+{
+  "indicators": {
+    "spx": {
+      "lower_ratio": -0.2,
+      "upper_ratio": 0.2
+    },
+    "vix": {
+      "min": 9,
+      "max": 80
+    }
+  },
+  "weights": {
+    "fear_greed": 1.0
+  },
+  "backtesting": {
+    "start_date": "2010-01-01",
+    "end_date": "2023-12-31"
+  }
+}
