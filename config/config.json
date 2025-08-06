@@ -3,6 +3,10 @@
     "spx": {
       "lower_ratio": -0.2,
       "upper_ratio": 0.2
+    },
+    "vix": {
+      "min": 9,
+      "max": 80
     }
   },
   "weights": {

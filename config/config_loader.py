@@ -31,5 +31,5 @@ def get_config():
         load_config()
     return _GLOBAL_CONFIG
 
-# Opcional: mantener APP_CONFIG para compatibilidad
-APP_CONFIG = get_config()
+# Opcional: mantener APP_CONFIG para compatibilidad y acceso directo al importar el modulo
+# APP_CONFIG = get_config()
