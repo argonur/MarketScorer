@@ -21,7 +21,7 @@ Cada indicador se define por su nombre `(Por ejemplo S&P 500 = 'spx')` seguido d
 <aside>
 👉🏼 Impacto
 
-Si el calculo para el índice S&P 500 con relación a su Simple Moving Average (SMP200) cae por debajo de `lower_ratio` o supera el `upper_ratio` el sistema tomara decisiones basadas en este indicador.
+Si el calculo para el índice S&P 500 con relación a su Simple Moving Average (SMA200) cae por debajo de `lower_ratio` o supera el `upper_ratio` el sistema tomara decisiones basadas en este indicador.
 
 </aside>
 
