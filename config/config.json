@@ -2,7 +2,8 @@
   "indicators": {
     "spx": {
       "lower_ratio": -0.2,
-      "upper_ratio": 0.2
+      "upper_ratio": 0.2,
+      "sma_period": 200
     },
     "vix": {
       "min": 9,
