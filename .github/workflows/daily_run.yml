@@ -13,7 +13,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: dyeosvaldoperalta/marketscorer:1.1
+      image: dyeosvaldoperalta/marketscorer:1.2
 
     steps:
       - name: ⬇️ Clonar repositorio
