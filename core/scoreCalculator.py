@@ -1,6 +1,7 @@
 from typing import Callable, List, Dict
 from indicators.IndicatorModule import IndicatorModule
 from indicators.FearGreedIndicator import FearGreedIndicator
+from indicators.spxIndicator import SPXIndicator
 from config.config_loader import get_config
 
 config = get_config() # Obtener la configuración
@@ -36,8 +37,6 @@ class ScoreCalculator:
                 raise ValueError(f"El peso para: '{name}' debe ser mayor que cero (actual: {weight})")
             
             total_weight += weight
-            if total_weight != 1.0:
-                raise ValueError(f"El resultado de la suma de los pesos no es 1.0 (actual: {total_weight})")
 
             score = self.scorer_fn(indicator)
 
@@ -47,11 +46,11 @@ class ScoreCalculator:
             if not (0.0 <= score <= 1.0):
                 raise ValueError(f"Score fuera de rango para: '{name}': {score}")
 
-            score_final += (score * 100) * weight
-            
-            #print(f"Total de pesos: {total_weight}")
+            score_final += (score * 100) * weight    
+        #print(f"Total de pesos: {total_weight}")
             #print(f"Score antes del final: {score_final}")
-
+        if total_weight != 1.0:
+            raise ValueError(f"El resultado de la suma de los pesos no es 1.0 (actual: {total_weight})")
         return score_final / total_weight
 
 def valid_weight(param):
@@ -61,6 +60,7 @@ def valid_weight(param):
 
         # Verifico si el parametro existe en los pesos
         if param in weights:
+            print(f"El peso de {param} es: {weights[param]}")
             return weights[param]
         else:
             print(f"⚠️ Peso no encontrado para indicador: {param}")
@@ -73,20 +73,24 @@ def valid_weight(param):
 ### Programa principal ###
 if __name__ == "__main__":
     fear_greed = FearGreedIndicator()
+    spx_sma = SPXIndicator()
+
     fearGreed_weight = valid_weight('fear_greed')
+    spx_weight = valid_weight('spx')
 
     #Lista de indicadores
-    indicadores = [fear_greed]
+    indicadores = [spx_sma, fear_greed]
     
     #Pesos obtenidos desde la configuración global
     pesos = { 
-        "FearGreedIndicator": fearGreed_weight
+        "FearGreedIndicator": fearGreed_weight,
+        "SPXIndicator": spx_weight
     }
 
     # Calculadora Score
     try:
         calculator = ScoreCalculator(indicadores, pesos)
-        total = calculator.calculate_score()
-        print(f"Score final: {total:.0f}")
+        total = calculator.calculate_score().__round__()
+        print(f"Score final: {total}")
     except Exception as e:
         print(f"❌ Error crítico en la configuración\n{e}")
