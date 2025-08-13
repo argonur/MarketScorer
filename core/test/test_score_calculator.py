@@ -5,6 +5,14 @@ from unittest import mock
 
 from core.scoreCalculator import ScoreCalculator, valid_weight
 
+# Fixture para el test_valid_weights
+@pytest.fixture
+def valid_weights():
+    return {
+        "FearGreedIndicator": valid_weight('fear_greed'),
+        "SPXIndicator": valid_weight('spx')
+    }
+
 # Casos validos
 def test_score_calculator_valid():
     mock_indicator = MagicMock()
@@ -89,21 +97,35 @@ def test_weights_by_global_configuration():
     with pytest.raises(ValueError, match="Hubo un problema al"):
         ScoreCalculator(indicators, weights).calculate_score()
 
+# Caso, valida que los pesos de los indicadores sean validos
 def test_valid_weights():
-    mock_indicator = MagicMock()
-    mock_indicator.get_score.return_value = 0.43
-    indicators = [mock_indicator]
-    valid_weights_config = valid_weight('fear_greed')
-    weights = {"MagicMock": valid_weights_config }
+    mock_indicator_fg = MagicMock()
+    mock_indicator_spx = MagicMock()
+
+    type(mock_indicator_fg).__name__ = "FearGreedIndicator"
+    type(mock_indicator_spx).__name__ = "SPXIndicator"
+
+    valid_weight_fg = valid_weight('fear_greed')
+    valid_weight_spx = valid_weight('spx')
+
+    mock_indicator_fg.get_score.return_value = 0.37
+    mock_indicator_spx.get_score.return_value = 0.28
+
+    indicators = [mock_indicator_fg, mock_indicator_spx]
+
+    weights = {
+        "FearGreedIndicator": valid_weight_fg,
+        "SPXIndicator": valid_weight_spx
+        }
 
     calculator = ScoreCalculator(indicators, weights)
-    assert calculator.calculate_score() == 43.0
+    assert calculator.calculate_score().__round__() == 32.0
 
 def test_wrong_weights():
     mock_indicator = MagicMock()
     mock_indicator.get_score.return_value = 0.43
     indicators = [mock_indicator]
-    valid_weights_config = valid_weight('spx')
+    valid_weights_config = valid_weight('vix')
     weights = {"MagicMock": valid_weights_config }
 
     with pytest.raises(ValueError, match="Hubo un problema al"):

@@ -23,6 +23,7 @@ jobs:
         run: |
           mkdir -p htmlcov/reports
           python tests/run_tests.py
+          python -m indicators.spxIndicator
           python -m core.scoreCalculator
 
       - name: 📁 Subir reportes como artifacts
