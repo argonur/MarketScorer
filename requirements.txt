@@ -4,3 +4,4 @@ pytest-cov==6.2.1
 pytest-html==4.1.1
 pandas==2.3.1
 yfinance==0.2.65
+dotenv==0.9.9
