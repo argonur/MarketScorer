@@ -25,6 +25,7 @@ jobs:
           python tests/run_tests.py
           python -m indicators.spxIndicator
           python -m core.scoreCalculator
+          python -m notifications.telegramNotifier
 
       - name: 📁 Subir reportes como artifacts
         uses: actions/upload-artifact@v4
