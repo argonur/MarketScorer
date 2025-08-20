@@ -11,7 +11,7 @@ jobs:
   test:
     runs-on: [self-hosted, local]
     container:
-      image: dyeosvaldoperalta/marketscorer:1.2
+      image: dyeosvaldoperalta/marketscorer:1.3
 
     steps:
       - name: ⬇️ Clonar código del repositorio
@@ -22,3 +22,4 @@ jobs:
           python tests/run_tests.py
           python -m indicators.spxIndicator
           python -m core.scoreCalculator
+          python -m notifications.telegramNotifier

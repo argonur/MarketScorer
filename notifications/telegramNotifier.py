@@ -116,6 +116,7 @@ class TelegramNotifier:
 
         notifier = TelegramNotifier(post_fn=post_fn, config_fn=config_fn, getenv_fn=getenv_fn)
         notifier.enviar_mensaje(mensaje)
+        print(f"✅ Notificacion enviada a Telegram")
         return mensaje
 
 if __name__ == "__main__":
