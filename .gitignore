@@ -2,6 +2,7 @@
 marketScorer/
 
 # Archivos para paquetes
+.env
 
 # Archivos de Python compilados
 __pycache__/
