@@ -12,6 +12,23 @@
 - `CHAT_ID`: Es el código del chat a donde el bot enviará los mensajes.
 - `USER_IDENTIFIER`: Es el identificador (correo) con el cual se respalda y accede a la información de cada usuario en la base de datos.
 
+### Github Actions
+
+- No olvidar el agregar secrets en Github Actions con los mismos nombres y contenido que nuestras variables de entorno en la configuración del repositorio.
+- Agregar un paso env a nuestro workflow para poder acceder a estos secrets al momento de la ejecucion de nuestro workflow
+  Ejemplo:
+
+```yaml
+- name: 🧪 Ejecutar pruebas y coverage
+  env:
+    CHAT_ID: ${{ secrets.CHAT_ID }}
+    BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+    DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  run: |
+    mkdir -p htmlcov/reports
+    python tests/run_tests.py
+```
+
 ---
 
 ## Esquema de la base de datos
