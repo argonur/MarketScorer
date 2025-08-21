@@ -131,7 +131,7 @@ if __name__ == "__main__": # pragma: no cover
             config = get_user_config(identifier)
 
             if config:
-                print(f"✅ Configuración encontrada: {config}")
+                print(f"✅ Configuración encontrada")
             else:
                 print("⚠️ Usuario no encontrado.")
         elif opcion == '4':
