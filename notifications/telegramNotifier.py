@@ -117,7 +117,7 @@ class TelegramNotifier:
             f"📰 CNN Fear & Greed: <b>{value_fg}</b>\n"
             f"📈 SMA-200 S&P 500: <b>{spx_sma200_valor:.2f}</b>\n"
             f"🏛️ Calculo SMA-200 S&P500: <b>{calculo_sma200:.2f}</b>\n"
-            f"📰 Valor normalizado de Vix: <br>{vix_normalizado:.2f}</br>\n"
+            f"📰 Valor normalizado de Vix: <b>{vix_normalizado:.2f}</b>\n"
             f"💰 Último Cierre S&P 500: <b>{spx_ultimo_cierre:.2f}</b>\n"
             f"🧾 Score Final: <b>{score_final}%</b>\n"
         )

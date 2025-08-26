@@ -131,7 +131,7 @@ def test_ensambla_y_envia_mensaje(monkeypatch):
     assert "CNN Fear & Greed: <b>68 🟢 greed</b>" in msg
     assert "SMA-200 S&P 500: <b>0.73</b>" in msg
     assert "Calculo SMA-200 S&P500: <b>4567.89</b>" in msg
-    assert "Valor normalizado de Vix: <br>0.08</br>\n"
+    assert "Valor normalizado de Vix: <br>0.08</br>"
     assert "Último Cierre S&P 500: <b>4550.12</b>" in msg
     assert "Score Final: <b>62%</b>" in msg
 
