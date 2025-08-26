@@ -2,6 +2,7 @@ from typing import Callable, List, Dict
 from indicators.IndicatorModule import IndicatorModule
 from indicators.FearGreedIndicator import FearGreedIndicator
 from indicators.spxIndicator import SPXIndicator
+from indicators.vixIndicator import VixIndicator
 from config.config_loader import get_config
 
 config = get_config() # Obtener la configuración
@@ -40,7 +41,6 @@ class ScoreCalculator:
 
             score = self.scorer_fn(indicator)
 
-
             if score is None:
                 raise ValueError(f"El indicador '{name}' retornó un score Nulo")
             if not (0.0 <= score <= 1.0):
@@ -74,17 +74,20 @@ def valid_weight(param):
 if __name__ == "__main__":
     fear_greed = FearGreedIndicator()
     spx_sma = SPXIndicator()
+    vix = VixIndicator()
 
     fearGreed_weight = valid_weight('fear_greed')
     spx_weight = valid_weight('spx')
+    vix_weight = valid_weight('vix')
 
     #Lista de indicadores
-    indicadores = [spx_sma, fear_greed]
+    indicadores = [spx_sma, fear_greed, vix]
     
     #Pesos obtenidos desde la configuración global
     pesos = { 
         "FearGreedIndicator": fearGreed_weight,
-        "SPXIndicator": spx_weight
+        "SPXIndicator": spx_weight,
+        "VixIndicator": vix_weight
     }
 
     # Calculadora Score
