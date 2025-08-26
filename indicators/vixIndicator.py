@@ -23,9 +23,13 @@ class VixIndicator(IndicatorModule):
             # Buscamos valors de los ultimos 5 dias habiles
             history = ticker.history(period = "5d")
             if not history.empty:
-                # Filtramos solo los dias con mercado cerrado y habiles, se excluye si esta abierto
-                last_closed_day = history[history.index.date < datetime.today().date()]
-                last_close = last_closed_day['Close'].iloc[-1]
+                today = datetime.today().date()
+                fechas = history.index.date
+            # Filtramos solo los dias con mercado cerrado y habiles, se excluye si esta abierto
+                if today in fechas:
+                    last_close = history.loc[history.index.date == today, 'Close'].iloc[-1]
+                else:
+                    last_close = history.loc[history.index.date < today, 'Close'].iloc[-1]
                 return last_close
             else:
                 raise ValueError("No se obtuvieron datos del ultimo cierre")

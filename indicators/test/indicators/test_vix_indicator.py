@@ -29,7 +29,7 @@ def test_fetch_data_valido(mock_yf_client):
     indicador = VixIndicator(yf_client=cliente, vix_min=9, vix_max=80)
     resultado = round(indicador.fetch_data(), 2)
 
-    assert resultado == 14.75
+    assert resultado == 14.79
 
 def test_fetch_data_vacio(mock_yf_client):
     cliente, ticker_instance = mock_yf_client
@@ -39,6 +39,53 @@ def test_fetch_data_vacio(mock_yf_client):
     resultado = indicador.fetch_data()
 
     assert resultado is None
+
+def test_fetch_data_valido_busca_ultimo_cierre(mock_yf_client):
+    cliente, ticker_instance = mock_yf_client
+
+    # Simulamos fechas: hoy, ayer, etc.
+    fechas = [datetime.today().date() - timedelta(days=i) for i in range(5)]
+    fechas = sorted(fechas)
+
+    # Creamos un DataFrame con esos índices
+    df_simulado = pd.DataFrame(
+        {'Close': [14.15, 14.22, 14.85, 14.97, 15.02]},
+        index=pd.to_datetime(fechas)
+    )
+
+    # Simulamos que history() devuelve ese DataFrame
+    ticker_instance.history.return_value = df_simulado
+
+    indicador = VixIndicator(yf_client=cliente, vix_min=9, vix_max=80)
+    resultado = round(indicador.fetch_data(), 2)
+
+    # Si hoy es martes y hay datos para hoy, debería devolver 15.02
+    # Si no hay datos para hoy, debería devolver 14.97
+    hoy = datetime.today().date()
+    if hoy in df_simulado.index.date:
+        assert resultado == 15.02
+    else:
+        assert resultado == 14.97
+
+def test_fetch_data_sin_datos_hoy_usa_ultimo_cierre(mock_yf_client):
+    cliente, ticker_instance = mock_yf_client
+
+    # Simulamos fechas que NO incluyen hoy
+    fechas = [datetime.today().date() - timedelta(days=i + 1) for i in range(5)]
+    fechas = sorted(fechas)
+
+    df_sin_hoy = pd.DataFrame(
+        {'Close': [14.15, 14.22, 14.85, 14.97, 15.02]},
+        index=pd.to_datetime(fechas)
+    )
+
+    ticker_instance.history.return_value = df_sin_hoy
+
+    indicador = VixIndicator(yf_client=cliente, vix_min=9, vix_max=80)
+    resultado = round(indicador.fetch_data(), 2)
+
+    # El último cierre anterior a hoy es el más reciente del DataFrame
+    assert resultado == 15.02
 
 ######## normalize ########
 
