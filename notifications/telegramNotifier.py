@@ -3,6 +3,7 @@ import requests
 from dotenv import load_dotenv
 from indicators.spxIndicator import SPXIndicator
 from indicators.FearGreedIndicator import FearGreedIndicator
+from indicators.vixIndicator import VixIndicator
 from core.scoreCalculator import ScoreCalculator, valid_weight
 from utils.db_user_config import get_user_config
 
@@ -70,7 +71,7 @@ class TelegramNotifier:
     @staticmethod
     def enviar_reporte_mercado(post_fn=requests.post, config_fn=get_user_config,
         getenv_fn=os.getenv, spx_cls=SPXIndicator,
-        fg_cls=FearGreedIndicator, score_cls=ScoreCalculator) -> str:
+        fg_cls=FearGreedIndicator, vix_cls=VixIndicator, score_cls=ScoreCalculator) -> str:
 
         """
         Calcula indicadores, arma el mensaje y lo envía.
@@ -80,18 +81,23 @@ class TelegramNotifier:
 
         spx_sma = spx_cls()
         fear_greed = fg_cls()
+        vix = vix_cls()
+
 
         # 2️⃣ Obtener pesos
         spx_weight = valid_weight("spx")
         fear_greed_weight = valid_weight("fear_greed")
+        vix_weight = valid_weight("vix")
+
         pesos = {
             "SPXIndicator": spx_weight,
-            "FearGreedIndicator": fear_greed_weight
+            "FearGreedIndicator": fear_greed_weight,
+            "VixIndicator": vix_weight
         }
 
         # 3️⃣ Calcular score final
         calculator = score_cls(
-            indicators=[spx_sma, fear_greed],
+            indicators=[spx_sma, fear_greed, vix],
             weights=pesos
         )
 
@@ -103,13 +109,15 @@ class TelegramNotifier:
         spx_sma200_valor = spx_sma.normalize()
         calculo_sma200 = spx_sma.fetch_data()
         spx_ultimo_cierre = spx_sma.obtener_ultimo_cierre()
+        vix_normalizado = vix.normalize()
 
         # 5️⃣ Formatear mensaje
         mensaje = (
             f"<b>📊 Reporte Mercado</b>\n"
             f"📰 CNN Fear & Greed: <b>{value_fg}</b>\n"
             f"📈 SMA-200 S&P 500: <b>{spx_sma200_valor:.2f}</b>\n"
-            f"🏛️ Calculo SMA-200 S&P 500: <b>{calculo_sma200:.2f}</b>\n"
+            f"🏛️ Calculo SMA-200 S&P500: <b>{calculo_sma200:.2f}</b>\n"
+            f"📰 Valor normalizado de Vix: <b>{vix_normalizado:.2f}</b>\n"
             f"💰 Último Cierre S&P 500: <b>{spx_ultimo_cierre:.2f}</b>\n"
             f"🧾 Score Final: <b>{score_final}%</b>\n"
         )

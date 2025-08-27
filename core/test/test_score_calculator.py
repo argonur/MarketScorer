@@ -101,31 +101,36 @@ def test_weights_by_global_configuration():
 def test_valid_weights():
     mock_indicator_fg = MagicMock()
     mock_indicator_spx = MagicMock()
+    mock_indicador_vix = MagicMock()
 
     type(mock_indicator_fg).__name__ = "FearGreedIndicator"
     type(mock_indicator_spx).__name__ = "SPXIndicator"
+    type(mock_indicador_vix).__name__ = "VixIndicator"
 
     valid_weight_fg = valid_weight('fear_greed')
     valid_weight_spx = valid_weight('spx')
+    valid_weight_vix = valid_weight('vix')
 
-    mock_indicator_fg.get_score.return_value = 0.37
+    mock_indicator_fg.get_score.return_value = 0.4
     mock_indicator_spx.get_score.return_value = 0.28
+    mock_indicador_vix.get_score.return_value = 0.08
 
-    indicators = [mock_indicator_fg, mock_indicator_spx]
+    indicators = [mock_indicator_fg, mock_indicator_spx, mock_indicador_vix]
 
     weights = {
         "FearGreedIndicator": valid_weight_fg,
-        "SPXIndicator": valid_weight_spx
+        "SPXIndicator": valid_weight_spx,
+        "VixIndicator": valid_weight_vix
         }
 
     calculator = ScoreCalculator(indicators, weights)
-    assert calculator.calculate_score().__round__() == 32.0
+    assert calculator.calculate_score().__round__() == 25
 
 def test_wrong_weights():
     mock_indicator = MagicMock()
     mock_indicator.get_score.return_value = 0.43
     indicators = [mock_indicator]
-    valid_weights_config = valid_weight('vix')
+    valid_weights_config = valid_weight('spy')
     weights = {"MagicMock": valid_weights_config }
 
     with pytest.raises(ValueError, match="Hubo un problema al"):

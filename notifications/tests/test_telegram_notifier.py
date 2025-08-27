@@ -99,6 +99,9 @@ class FakeSPX:
     def fetch_data(self): return 4567.89
     def obtener_ultimo_cierre(self): return 4550.12
 
+class FakeVix:
+    def normalize(self): return 0.08
+
 class FakeScore:
     def __init__(self, indicators, weights): pass
     def calculate_score(self): return 61.7
@@ -119,6 +122,7 @@ def test_ensambla_y_envia_mensaje(monkeypatch):
         getenv_fn=fake_getenv,
         spx_cls=FakeSPX,
         fg_cls=lambda: FakeFG(68, "greed"),
+        vix_cls=FakeVix,
         score_cls=FakeScore,
     )
 
@@ -126,7 +130,8 @@ def test_ensambla_y_envia_mensaje(monkeypatch):
     assert msg.startswith("<b>📊 Reporte Mercado</b>")
     assert "CNN Fear & Greed: <b>68 🟢 greed</b>" in msg
     assert "SMA-200 S&P 500: <b>0.73</b>" in msg
-    assert "Calculo SMA-200 S&P 500: <b>4567.89</b>" in msg
+    assert "Calculo SMA-200 S&P500: <b>4567.89</b>" in msg
+    assert "Valor normalizado de Vix: <br>0.08</br>"
     assert "Último Cierre S&P 500: <b>4550.12</b>" in msg
     assert "Score Final: <b>62%</b>" in msg
 

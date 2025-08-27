@@ -11,8 +11,9 @@
     }
   },
   "weights": {
-    "fear_greed": 0.5,
-    "spx": 0.5
+    "fear_greed": 0.34,
+    "spx": 0.33,
+    "vix": 0.33
   },
   "backtesting": {
     "start_date": "2010-01-01",
