@@ -34,8 +34,8 @@ class FearGreedIndicator(IndicatorModule):
                 raise ValueError("No se pudo obtener el valor de Fear & Greed")
             print(f"Valor actual del CNN Fear & Greed Index: {round(fg_indicator.value)} ({fg_indicator.description})")
             print(f"Última actualización: {fg_indicator.last_update}")
-        except RuntimeError() as rte:
-            print(f"[FG]: Ha ocurrido un error: {rte}")
+        except Exception as e:
+            print(f"[FG]: Ha ocurrido un error: {e}")
 
 if __name__ == "__main__":
     indicator = FearGreedIndicator()
