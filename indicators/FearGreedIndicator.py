@@ -13,13 +13,9 @@ class FearGreedIndicator(IndicatorModule):
     def fetch_data(self): 
         try: 
             fgi = self.fetch_fn()
-            value = fgi.value.__round__() # Se redondea el valor de la API
 
             if not (0 <= fgi.value <= 100):
                 raise ValueError(f"Valor fuera de rango esperado: {fgi.value}")
-
-            print(f"Valor actual del CNN Fear & Greed Index: {value} ({fgi.description})")
-            print(f"Última actualización: {fgi.last_update}") 
             return fgi
         except Exception as e: 
             print(f"Error al obtener el valor actual: {e}") 
@@ -31,6 +27,17 @@ class FearGreedIndicator(IndicatorModule):
             return (100 - data.value.__round__()) / 100 # Para obtener un numero entre 0 y 1 en decimal
         return 0
 
+    def get_current_indicator(self):
+        fg_indicator = self.fetch_data()
+        try:
+            if fg_indicator is None:
+                raise ValueError("No se pudo obtener el valor de Fear & Greed")
+            print(f"Valor actual del CNN Fear & Greed Index: {round(fg_indicator.value)} ({fg_indicator.description})")
+            print(f"Última actualización: {fg_indicator.last_update}")
+        except RuntimeError() as rte:
+            print(f"[FG]: Ha ocurrido un error: {rte}")
+
 if __name__ == "__main__":
     indicator = FearGreedIndicator()
+    indicator.get_current_indicator()
     print("Resultado normalizado:", indicator.get_score())
