@@ -4,20 +4,28 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-DB_URL = os.getenv("DATABASE_URL")
+DB_URL = os.getenv("BACKUP_DATABASE_URL")
 
-class Database():
+class Database:
     _instance = None
 
-    def __init__(self, connection_factory=None):
-        self._connection = None
-        self._connection_factory = connection_factory or (lambda: psycopg2.connect(DB_URL, cursor_factory=RealDictCursor))
-
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs):
         if cls._instance is None:
+            # Creamos la única instancia
             cls._instance = super(Database, cls).__new__(cls)
             cls._instance._connection = None
         return cls._instance
+
+    def __init__(self, connection_factory=None):
+        # Sólo sobreescribimos el factory si lo pasaron
+        if connection_factory is not None:
+            self._connection_factory = connection_factory
+        else:
+            # En el primer init define el factory por defecto
+            self._connection_factory = getattr(
+                self, "_connection_factory",
+                lambda: psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
+            )
     
     # Metodo que permite reiniciar el singleton (Util para los tests)
     @classmethod
@@ -47,6 +55,7 @@ class Database():
         with conn.cursor() as cursor:
             cursor.execute(query, params or ())
             conn.commit()
+            return cursor.rowcount
 
     def close(self):
         if self._connection and not self._connection.closed:
