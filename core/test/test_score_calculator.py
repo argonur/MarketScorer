@@ -135,3 +135,27 @@ def test_wrong_weights():
 
     with pytest.raises(ValueError, match="Hubo un problema al"):
         ScoreCalculator(indicators, weights).calculate_score()
+
+def test_get_global_score_sin_redondear(monkeypatch):
+    # Mock de from_global_config para devolver un ScoreCalculator falso
+    fake_calc = MagicMock()
+    fake_calc.calculate_score.return_value = 42.7
+    monkeypatch.setattr(ScoreCalculator, "from_global_config", classmethod(lambda cls: fake_calc))
+
+    result = ScoreCalculator.get_global_score(rounded=False)
+
+    # Debe devolver el valor crudo
+    assert result == 42.7
+    fake_calc.calculate_score.assert_called_once()
+
+
+def test_get_global_score_redondeado(monkeypatch):
+    fake_calc = MagicMock()
+    fake_calc.calculate_score.return_value = 42.7
+    monkeypatch.setattr(ScoreCalculator, "from_global_config", classmethod(lambda cls: fake_calc))
+
+    result = ScoreCalculator.get_global_score(rounded=True)
+
+    # Debe devolver el valor redondeado
+    assert result == 43
+    fake_calc.calculate_score.assert_called_once()
