@@ -6,8 +6,14 @@ from indicators.FearGreedIndicator import FearGreedIndicator
 from indicators.vixIndicator import VixIndicator
 from core.scoreCalculator import ScoreCalculator, valid_weight
 from utils.db_user_config import get_user_config
+#from data.market_dates import market_now
+import data.market_dates as md
+from datetime import datetime, timedelta, timezone
 
 load_dotenv()
+
+# Zona horaria local (GMT-6)
+LOCAL_TZ = timezone(timedelta(hours=-6))
 
 # Este modulo unicamente envia notificaciones con respecto al calculo del modulo ScorerCalculator
 
@@ -111,9 +117,12 @@ class TelegramNotifier:
         spx_ultimo_cierre = spx_sma.obtener_ultimo_cierre()
         vix_normalizado = vix.normalize()
 
+        hora_local = md.market_now().astimezone(LOCAL_TZ).strftime("%Y-%m-%d %H:%M:%S")
+
         # 5️⃣ Formatear mensaje
         mensaje = (
             f"<b>📊 Reporte Mercado</b>\n"
+            f"🕟 Date: {hora_local}\n"
             f"📰 CNN Fear & Greed: <b>{value_fg}</b>\n"
             f"📈 SMA-200 S&P 500: <b>{spx_sma200_valor:.2f}</b>\n"
             f"🏛️ Calculo SMA-200 S&P500: <b>{calculo_sma200:.2f}</b>\n"

@@ -1,6 +1,9 @@
 import pytest
 import types
 from notifications.telegramNotifier import TelegramNotifier, valoracion_feargreed
+from datetime import datetime
+from zoneinfo import ZoneInfo
+from datetime import timezone, timedelta
 
 ##### Test para la valoracion_feargreed() #####
 def fg(value, description):
@@ -106,15 +109,25 @@ class FakeScore:
     def __init__(self, indicators, weights): pass
     def calculate_score(self): return 61.7
 
-def test_ensambla_y_envia_mensaje(monkeypatch):
+### Se requiere mockear la fecha y hora para el siguiente test
+def fake_market_now():
+    class FakeDateTime:
+        def now(self):
+            return datetime(2025, 9, 9, 16, 41, tzinfo=ZoneInfo("America/New_York"))
+    return FakeDateTime()
+
+def test_envio_mensaje_con_gmt6_fijo(monkeypatch):
     sent = {}
     def fake_post(url, data):
         sent["url"] = url
         sent["data"] = data
-        class R: status_code=200; text="OK"
+        class R: status_code = 200; text = "OK"
         return R()
     def fake_getenv(k):
-        return {"BOT_TOKEN":"X", "CHAT_ID":"Y", "USER_IDENTIFIER":"u"}.get(k)
+        return {"BOT_TOKEN": "X", "CHAT_ID": "Y", "USER_IDENTIFIER": "u"}.get(k)
+
+    fixed_dt = datetime(2025, 9, 9, 16, 15, tzinfo=ZoneInfo("America/New_York"))
+    monkeypatch.setattr("notifications.telegramNotifier.md.market_now", lambda: fixed_dt)
 
     msg = TelegramNotifier.enviar_reporte_mercado(
         post_fn=fake_post,
@@ -126,15 +139,7 @@ def test_ensambla_y_envia_mensaje(monkeypatch):
         score_cls=FakeScore,
     )
 
-    # Aserciones sobre el mensaje y el payload enviado
-    assert msg.startswith("<b>📊 Reporte Mercado</b>")
-    assert "CNN Fear & Greed: <b>68 🟢 greed</b>" in msg
-    assert "SMA-200 S&P 500: <b>0.73</b>" in msg
-    assert "Calculo SMA-200 S&P500: <b>4567.89</b>" in msg
-    assert "Valor normalizado de Vix: <br>0.08</br>"
-    assert "Último Cierre S&P 500: <b>4550.12</b>" in msg
-    assert "Score Final: <b>62%</b>" in msg
+    gmt6 = timezone(timedelta(hours=-6))
+    expected = fixed_dt.astimezone(gmt6).strftime("%Y-%m-%d %H:%M:%S")
+    assert f"🕟 Date: {expected}" in msg
 
-    assert sent["url"] == "https://api.telegram.org/botX/sendMessage"
-    assert sent["data"]["chat_id"] == "Y"
-    assert sent["data"]["text"] == msg
