@@ -13,7 +13,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: dyeosvaldoperalta/marketscorer:1.3
+      image: dyeosvaldoperalta/marketscorer:1.4
 
     steps:
       - name: ⬇️ Clonar repositorio
@@ -30,6 +30,7 @@ jobs:
           python -m indicators.spxIndicator
           python -m core.scoreCalculator
           python -m notifications.telegramNotifier
+          python -m data.scorer_backup
 
       - name: 📁 Subir reportes como artifacts
         uses: actions/upload-artifact@v4

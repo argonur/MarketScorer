@@ -14,3 +14,4 @@ htmlcov/
 
 # Archivos temporales
 data/temp/*.json
+.vscode/

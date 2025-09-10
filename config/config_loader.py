@@ -21,8 +21,6 @@ def load_config(custom_path=None):
         print(f"❌ Error de sintaxis de JSON en {path}: {e}")
     except FileNotFoundError:
         print(f"❌ Archivo no encontrado en: {path}")
-    except Exception as e:
-        print(f"❌ Ocurrió un error inesperado: {e}")
     return {}
 
 # Cargar configuración solo cuando se solicite explícitamente

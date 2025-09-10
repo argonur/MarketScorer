@@ -86,3 +86,19 @@ def test_normalize_valor_medio():
     assert indicador.normalize() == 0.5  # (100 - 50) / 100
 
 # Se pueden agregar test parametrizados para normalize fuera de rango como en fetch_data
+
+###### Test para el metodo get_current_indicator #####
+def test_get_current_indicator_valido(capsys):
+    mock_fgi = MagicMock()
+    mock_fgi.value = 53
+    mock_fgi.description = "mock"
+    mock_fgi.last_update = "2025-09-05"
+    
+    FearGreedIndicator(fetch_fn=lambda: mock_fgi).get_current_indicator()
+    captured = capsys.readouterr()
+    assert "Valor actual del CNN Fear & Greed" in captured.out # El primer print del metodo se valida
+
+def test_get_current_indicator_none(capsys):
+    FearGreedIndicator(fetch_fn=lambda: None).get_current_indicator()
+    captured = capsys.readouterr()
+    assert "No se pudo obtener el valor de Fear & Greed" in captured.out # El mensaje de error se valida
