@@ -8,6 +8,7 @@ config = get_config()
 # Obtenemos el valor del periodo para SMA desde el modulo de configuracion
 periodo_sma = config.get('indicators',{}).get('spx',{}).get('sma_period')
 SIMBOL = "^SPX"
+start_date, end_date = md.yfinance_window_for_last_close()
 
 class SPXIndicator(IndicatorModule):
     # Constructor
@@ -25,11 +26,10 @@ class SPXIndicator(IndicatorModule):
         self.yf_client = yf_client or yf
     
 ### Metodo independiente para obtener el ultimo cierre ###
-    def get_last_close(self, simbol=SIMBOL):
+    def get_last_close(self, SIMBOL):
         # Metodo para obtener el valor del ultimo cierre del indice S&P 500
         try:
-            start_date, end_date = md.yfinance_window_for_last_close()
-            sp500 = self.yf_client.Ticker(simbol)
+            sp500 = self.yf_client.Ticker(SIMBOL)
             datos = sp500.history(start=start_date, end=end_date, auto_adjust=True)
 
             if datos.empty:
