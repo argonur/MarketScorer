@@ -24,8 +24,8 @@ class IndicatorModule(ABC):
         - Este metodo puede ser sobreescrito si el indicador necesita ajustar el resultado.
         """
         return self.normalize()
-    
-    def get_last_close(self, simbol: str):
+
+    def get_last_close(self):
         """
         - Metodo para obtener el valor del ultimo cierre de un simbolo.
         - Utiliza yfinance para descargar los datos.
