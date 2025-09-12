@@ -2,10 +2,12 @@ from queue import Empty
 from indicators.IndicatorModule import IndicatorModule
 from config.config_loader import get_config
 import yfinance as yf
+import data.market_dates as md
 
 config = get_config()
 # Obtenemos el valor del periodo para SMA desde el modulo de configuracion
 periodo_sma = config.get('indicators',{}).get('spx',{}).get('sma_period')
+SIMBOL = "^SPX"
 
 class SPXIndicator(IndicatorModule):
     # Constructor
@@ -23,34 +25,37 @@ class SPXIndicator(IndicatorModule):
         self.yf_client = yf_client or yf
     
 ### Metodo independiente para obtener el ultimo cierre ###
-    def obtener_ultimo_cierre(self):
+    def get_last_close(self, simbol=SIMBOL):
         # Metodo para obtener el valor del ultimo cierre del indice S&P 500
         try:
-            sp500 = self.yf_client.Ticker("^SPX")
-            hist = sp500.history(period="1d")
-            if not hist.empty:
-                ultimo_cierre = hist['Close'].iloc[-1]
-                return ultimo_cierre
-            else:
-                print("No se obtuvieron datos")
+            start_date, end_date = md.yfinance_window_for_last_close()
+            sp500 = self.yf_client.Ticker(simbol)
+            datos = sp500.history(start=start_date, end=end_date, auto_adjust=True)
+
+            if datos.empty:
+                print("No se obtuvieron datos para el S&P 500.")
                 return None
+            ultimo_cierre = float(datos['Close'].iloc[0])
+            return ultimo_cierre
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error al obtener el ultimo cierre: {e}")
             raise
     
     def fetch_data(self):
         try:
-            ticker = self.yf_client.Ticker("^SPX")
+            ticker = self.yf_client.Ticker(SIMBOL)
 
             # Descargar 300 dias bursatiles para asegurar los dias por defecto
             historical_data = ticker.history(period="300d")
 
             if historical_data.empty:
-                raise ValueError("No se obtuvieron datos historicos")
-            
+                print("No se obtuvieron datos historicos")
+                return None
+
             # Verificar si la columna 'Close' existe
             if 'Close' not in historical_data.columns:
-                raise ValueError("No se obtuvieron datos historicos")
+                print("No se obtuvieron datos historicos")
+                return None
             
             # Obtener precios de cierres
             cierres = historical_data['Close']
@@ -71,9 +76,10 @@ class SPXIndicator(IndicatorModule):
         try:
             sma = self.fetch_data()
             # Validamos antes de hacer las operaciones
-            if sma is None:
-                raise ValueError("No se pudo obtener un valor SMA valido")
-            ultimo_cierre = self.obtener_ultimo_cierre()
+            if sma:
+                ultimo_cierre = self.get_last_close(SIMBOL)
+            else:
+                raise ValueError("No se pudo calcular la SMA")
 
             if ultimo_cierre is None:
                 raise ValueError("No se pudo obtener el ultimo cierre")
@@ -85,7 +91,7 @@ class SPXIndicator(IndicatorModule):
                 return 1.0
             elif ratio >= self.upper_ratio:
                 return 0.0
-            elif self.lower_ratio < ratio < self.upper_ratio:
+            if self.lower_ratio < ratio < self.upper_ratio:
                 return (self.upper_ratio - ratio) / (self.upper_ratio - self.lower_ratio)
         except Exception as e:
             print(f"Hubo un error al normalizar los valores: {e}")
@@ -97,7 +103,7 @@ if __name__ == "__main__":
         
         print(f"Periodo de SMA: {periodo_sma}")
         print(f"Calculo SMA-{periodo_sma} de SPX: {indicador.fetch_data():.2f}")
-        print(f"Ultimo cierre: {indicador.obtener_ultimo_cierre():.2f}")
+        print(f"Ultimo cierre: {indicador.get_last_close(SIMBOL):.2f}")
         print(f"El score es de: {indicador.normalize():.2f}")
     except Exception as e:
         print(f"Hubo un error en el sistema: {e}")

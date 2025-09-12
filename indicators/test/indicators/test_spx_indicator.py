@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 from unittest.mock import MagicMock
-from indicators.spxIndicator import SPXIndicator
+from indicators.spxIndicator import SIMBOL, SPXIndicator
 
 # Simulamos una respuesta de yfinance
 @pytest.fixture
@@ -30,13 +30,14 @@ def test_fetch_data_ok(mock_yf_client):
 
 # Caso fetch_data, vacio
 
-def test_fetch_data_vacio(mock_yf_client):
+def test_fetch_data_vacio(mock_yf_client, capsys):
     client, ticker_instance = mock_yf_client
     ticker_instance.history.return_value = pd.DataFrame()
     indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
 
-    with pytest.raises(ValueError, match="No se obtuvieron"):
-        indicador.fetch_data()
+    indicador.fetch_data()
+    captured = capsys.readouterr()
+    assert "No se obtuvieron" in captured.out
 
 # Caso fetch_data no obtuvo valores suficientes para SMA
 
@@ -49,7 +50,7 @@ def test_fetch_data_insuficiente_devuelve_none(mock_yf_client):
     with pytest.raises(ValueError, match="dias disponibles"):
         indicador.fetch_data()
 
-def test_fetch_data_columna_close_no_existe(mock_yf_client):
+def test_fetch_data_columna_close_no_existe(mock_yf_client, capsys):
     client, ticker_instance = mock_yf_client
     
     # DataFrame sin columna 'Close'
@@ -63,8 +64,9 @@ def test_fetch_data_columna_close_no_existe(mock_yf_client):
     ticker_instance.history.return_value = historical_data
     indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
 
-    with pytest.raises(ValueError, match="No se obtuvieron datos historicos"):
-        indicador.fetch_data()
+    indicador.fetch_data()
+    captured = capsys.readouterr()
+    assert "No se obtuvieron" in captured.out
 
 #### Metodo obtener_ultimo_cierre ####
 
@@ -76,7 +78,7 @@ def test_obtener_ultimo_cierre_valido(mock_yf_client):
     ticker_instance.history.return_value = data
 
     indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
-    assert indicador.obtener_ultimo_cierre() == 200
+    assert indicador.get_last_close(SIMBOL) == 200
 
 # Caso obtener_ultimo_cierre, vacio
 
@@ -85,7 +87,7 @@ def test_obtener_ultimo_cierre_vacio(mock_yf_client):
     ticker_instance.history.return_value = pd.DataFrame()
     indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
 
-    assert indicador.obtener_ultimo_cierre() is None
+    assert indicador.get_last_close(SIMBOL) is None
 
 def test_obtener_ultimo_cierre_Nulo(mock_yf_client):
     client, ticker_instance = mock_yf_client
@@ -94,7 +96,7 @@ def test_obtener_ultimo_cierre_Nulo(mock_yf_client):
     indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
 
     with pytest.raises(Exception, match="Error:"):
-        indicador.obtener_ultimo_cierre()
+        indicador.get_last_close(SIMBOL)
 
 #### Metodo normalize ####
 
@@ -118,12 +120,12 @@ def test_normalize_limite_superior(mock_yf_client):
 
     assert indicador.normalize() == 0.0
 
-def test_normalize_missing_sma(mock_yf_client):
+def test_normalize_missing_sma(mock_yf_client, capsys):
     client, ticker_instance = mock_yf_client
     ticker_instance.history.return_value = pd.DataFrame()
 
     indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="No se pudo calcular"):
         indicador.normalize()
 
 def test_normalize_missing_last_close(mock_yf_client):
@@ -141,11 +143,21 @@ def test_normalize_missing_last_close(mock_yf_client):
 
 def test_normalize_middle_value(mock_yf_client):
     client, ticker_instance = mock_yf_client
+
+    # Simular histórico para SMA y luego último cierre
+    # Aseguramos que el ratio sea 0.05 (entre -0.2 y 0.2)
     ticker_instance.history.side_effect = [
-        pd.DataFrame({'Close': [100]*300}),
-        pd.DataFrame({'Close': [105]})
+        pd.DataFrame({'Close': [100]*300}),  # histórico para SMA
+        pd.DataFrame({'Close': [105]})       # último cierre
     ]
 
-    indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
+    indicador = SPXIndicator(
+        sma_period=5,
+        upper_ratio=0.2,
+        lower_ratio=-0.2,
+        yf_client=client
+    )
+
     result = indicador.normalize()
+
     assert 0.0 < result < 1.0
