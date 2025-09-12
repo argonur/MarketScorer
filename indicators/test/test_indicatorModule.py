@@ -20,6 +20,9 @@ class TestIndicatorModuleInterface:
     def test_override_get_score(self, implementation):
         assert hasattr(implementation, 'get_score')
         assert callable(implementation.get_score)
+    def test_get_score_returns_normalized_value(self, implementation):
+        score = implementation.get_score()
+        assert score == implementation.normalize()
 
     # La interfaz no permite ser instanciada directamente
     def test_interface_cannot_be_instantiated(self):
