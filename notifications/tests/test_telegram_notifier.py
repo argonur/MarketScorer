@@ -100,7 +100,7 @@ class FakeFG:
 class FakeSPX:
     def normalize(self): return 0.73
     def fetch_data(self): return 4567.89
-    def obtener_ultimo_cierre(self): return 4550.12
+    def get_last_close(self, SIMBOL="^SPX"): return 4550.12
 
 class FakeVix:
     def normalize(self): return 0.08

@@ -1,10 +1,12 @@
 from datetime import datetime
 from indicators.IndicatorModule import IndicatorModule
 from config.config_loader import get_config
+import data.market_dates as md
 import yfinance as yf
 
 config = get_config() # Instanciamos la configuración global para poder acceder a ella
 vix_weight = config.get('weights',{}).get('vix',{})
+SIMBOL = "^VIX"
 
 class VixIndicator(IndicatorModule):
     # Constructor
@@ -17,22 +19,25 @@ class VixIndicator(IndicatorModule):
         # cliente mockeable
         self.yf_client = yf_client or yf
 
-    def fetch_data(self):
+    def get_last_close(self, start_date, end_date) -> float | None:
         try:
-            ticker = self.yf_client.Ticker("^VIX")
-            # Buscamos valors de los ultimos 5 dias habiles
-            history = ticker.history(period = "5d")
-            if not history.empty:
-                today = datetime.today().date()
-                fechas = history.index.date
-            # Filtramos solo los dias con mercado cerrado y habiles, se excluye si esta abierto
-                if today in fechas:
-                    last_close = history.loc[history.index.date == today, 'Close'].iloc[-1]
-                else:
-                    last_close = history.loc[history.index.date < today, 'Close'].iloc[-1]
-                return last_close
-            else:
-                raise ValueError("No se obtuvieron datos del ultimo cierre")
+            vix = self.yf_client.Ticker(SIMBOL)
+            datos = vix.history(start=start_date, end=end_date, auto_adjust=True)
+            if datos.empty:
+                raise ValueError("Fallo al obtener datos de VIX.")
+            return float(datos['Close'].iloc[0])
+        except Exception as e:
+            print(f"Error al obtener el ultimo cierre: {e}")
+            return None
+
+    def fetch_data(self) -> float | None:
+        try:
+            start_date, end_date = md.yfinance_window_for_last_close()
+            last_close = self.get_last_close(start_date, end_date)
+            if last_close is None:
+                raise ValueError("No se obtuvieron datos de cierre.")
+            
+            return last_close
         except Exception as e:
             print(f"░ Fetch: {e}, ó no hay conexion a internet")
             return None

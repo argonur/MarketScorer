@@ -114,7 +114,7 @@ class TelegramNotifier:
         value_fg = valoracion_feargreed(fg_val) or "N/A"
         spx_sma200_valor = spx_sma.normalize()
         calculo_sma200 = spx_sma.fetch_data()
-        spx_ultimo_cierre = spx_sma.obtener_ultimo_cierre()
+        spx_ultimo_cierre = spx_sma.get_last_close(SIMBOL="^SPX")
         vix_normalizado = vix.normalize()
 
         hora_local = md.market_now().astimezone(LOCAL_TZ).strftime("%Y-%m-%d %H:%M:%S")
