@@ -124,7 +124,7 @@ def test_valid_weights():
         }
 
     calculator = ScoreCalculator(indicators, weights)
-    assert calculator.calculate_score().__round__() == 25
+    assert calculator.calculate_score().__round__() == 27
 
 def test_wrong_weights():
     mock_indicator = MagicMock()
