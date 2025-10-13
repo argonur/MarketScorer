@@ -11,8 +11,8 @@
     }
   },
   "weights": {
-    "fear_greed": 0.34,
-    "spx": 0.33,
+    "fear_greed": 0.40,
+    "spx": 0.27,
     "vix": 0.33
   },
   "backtesting": {
