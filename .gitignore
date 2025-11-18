@@ -15,4 +15,5 @@ htmlcov/
 # Archivos temporales
 data/temp/*.json
 data/temp/*.xls
+data/temp/*.xls.hash
 .vscode/
