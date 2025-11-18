@@ -1,6 +1,8 @@
 from indicators.IndicatorModule import IndicatorModule
 from utils.file_downloader import download_latest_file
+from data.market_dates import yfinance_window_for_last_close
 from dotenv import load_dotenv
+import yfinance as yf
 import os
 import pandas as pd
 
@@ -9,6 +11,8 @@ URL = os.getenv("SHELLER_PE_URL")
 NAME = os.getenv("SHILLER_PE_ARCHIVE_NAME")
 PATH_DIR = os.getenv("SAVE_PATH")
 MAX_VALUE = 120
+start_date, end_date = yfinance_window_for_last_close()
+SYMBOL = "^SPX"
 
 class ShellerPEIndicator(IndicatorModule):
     #Constructor
@@ -26,6 +30,10 @@ class ShellerPEIndicator(IndicatorModule):
             print(f"📁 Archivo listo para procesar: {filepath}")
             self.process_data(filepath)
 
+            # Obtener el ultimo cierre de S&P 500
+            last_close = round(self.get_last_close(SYMBOL), 2)
+            if last_close:
+                print("Ultimo cierre de S&P 500:", last_close)
         except Exception as e:
             print(e)
 
@@ -55,9 +63,23 @@ class ShellerPEIndicator(IndicatorModule):
         except Exception as e:
             print(f"Error al abrir el archivo")
 
+    def get_last_close(self, symbol):
+        try:
+            sp500 = yf.Ticker(symbol)
+            data = sp500.history(start=start_date, end=end_date, auto_adjust=True)
+            if data.empty:
+                print("No se pudieron obtener datos del indice S&P 500")
+                return None
+            last_close = float(data['Close'].iloc[0])
+            return last_close
+        except Exception as e:
+            print("Error al obtener el ultimo cierre", e)
+
 if __name__ == "__main__":
     try:
         indicator = ShellerPEIndicator()
         indicator.fetch_data()
     except Exception as e:
         print(e)
+
+# npm i -g @continuedev/cli
