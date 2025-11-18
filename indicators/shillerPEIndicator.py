@@ -31,9 +31,12 @@ class ShellerPEIndicator(IndicatorModule):
             self.process_data(filepath)
 
             # Obtener el ultimo cierre de S&P 500
-            last_close = round(self.get_last_close(SYMBOL), 2)
-            if last_close:
-                print("Ultimo cierre de S&P 500:", last_close)
+            last_close_spx = round(self.get_last_close(SYMBOL), 2)
+            if last_close_spx:
+                print("📍 Ultimo cierre de S&P 500:", last_close_spx)
+            daily_CAPE = round((last_close_spx / self.cape_average), 2)
+            if daily_CAPE:
+                print(f"👉 El CAPE diario es: {daily_CAPE}")
         except Exception as e:
             print(e)
 
