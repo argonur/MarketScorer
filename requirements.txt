@@ -8,3 +8,5 @@ dotenv==0.9.9
 psycopg2-binary==2.9.10
 python-telegram-bot==22.3
 freezegun==1.5.5
+xlrd==2.0.2
+openpyxl==3.1.5

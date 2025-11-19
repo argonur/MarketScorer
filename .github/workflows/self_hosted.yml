@@ -11,7 +11,7 @@ jobs:
   test:
     runs-on: [self-hosted, local]
     container:
-      image: dyeosvaldoperalta/marketscorer:1.4
+      image: dyeosvaldoperalta/marketscorer:1.5
 
     steps:
       - name: ⬇️ Clonar código del repositorio
