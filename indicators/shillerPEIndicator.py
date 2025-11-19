@@ -19,6 +19,7 @@ class ShellerPEIndicator(IndicatorModule):
     def __init__(self):
         super().__init__()
         self.cape_average = None # Para almacenar el promedio calculado
+        self.daily_cape = None
 
     def fetch_data(self):
         try:
@@ -34,9 +35,9 @@ class ShellerPEIndicator(IndicatorModule):
             last_close_spx = round(self.get_last_close(SYMBOL), 2)
             if last_close_spx:
                 print("📍 Ultimo cierre de S&P 500:", last_close_spx)
-            daily_CAPE = round((last_close_spx / self.cape_average), 2)
-            if daily_CAPE:
-                print(f"👉 El CAPE diario es: {daily_CAPE}")
+            self.daily_cape = round((last_close_spx / self.cape_average), 2)
+            if self.daily_cape:
+                print(f"👉 El CAPE diario es: {self.daily_cape}")
         except Exception as e:
             print(e)
 
@@ -84,5 +85,3 @@ if __name__ == "__main__":
         indicator.fetch_data()
     except Exception as e:
         print(e)
-
-# npm i -g @continuedev/cli

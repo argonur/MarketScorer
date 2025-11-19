@@ -1,5 +1,3 @@
-# utils/file_downloader.py
-
 import os
 from pathlib import Path
 from urllib.parse import urljoin
@@ -119,9 +117,6 @@ def download_latest_file(
                     temp_filepath.unlink(missing_ok=True)  # Asegurar limpieza
                     return str(latest_file)  # Devolver el archivo existente
 
-                # Eliminar archivo temporal si no se usó
-                temp_filepath.unlink(missing_ok=True)
-
             print(f"🔄 Archivo más reciente ({latest_file.name}) es anterior al último cierre. Descargando nuevo...")
 
         # Obtener la URL real del archivo
@@ -131,7 +126,8 @@ def download_latest_file(
             return None
 
         # Descargar nuevo archivo
-        print(f"⏳ Descargando nuevo archivo: {current_filename} desde {download_url}")
+        #print(f"⏳ Descargando nuevo archivo: {current_filename} desde {download_url}")
+        print(f"⏳ Descargando nuevo archivo: {current_filename}")
         try:
             respuesta = requests.get(download_url)
             if respuesta.status_code == 200:
