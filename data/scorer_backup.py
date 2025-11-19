@@ -5,7 +5,7 @@ from db.db_connection import Database
 from data.market_dates import market_now
 from config.config_loader import get_config
 from indicators.FearGreedIndicator import FearGreedIndicator
-from indicators.spxIndicator import SPXIndicator
+from indicators.spxIndicator import SPXIndicator, SIMBOL
 from indicators.vixIndicator import VixIndicator
 from core.scoreCalculator import ScoreCalculator
 
@@ -93,7 +93,7 @@ class ScorerBackup:
             params = [
                 self.calc_date,
                 self.sp.sma_period,
-                round(self.to_native(self.sp.obtener_ultimo_cierre()), 2),
+                round(self.to_native(self.sp.get_last_close(SIMBOL)), 2),
                 round(self.to_native(raw), 2),
                 round(self.to_native(self.sp.normalize()), 2)
             ]
@@ -175,4 +175,4 @@ if __name__ == "__main__":
     try:
         print("✅ Respaldo completado:", ScorerBackup().run())
     except Exception as e:
-        logger.error("Ocurrio un error al tratar de respaldar la información")
+        logger.error("Ocurrio un error al tratar de respaldar la información: ", e)
