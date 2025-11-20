@@ -7,6 +7,7 @@ def test_run_success(scorer, db_mock, monkeypatch):
     monkeypatch.setattr(scorer, "backup_spx", lambda cfg_id: None)
     monkeypatch.setattr(scorer, "backup_vix", lambda cfg_id: None)
     monkeypatch.setattr(scorer, "backup_score", lambda cfg_id: 88.8)
+    monkeypatch.setattr(scorer, "backup_shiller", lambda cfg_id: None)
 
     # 2️⃣ Ejecutamos run()
     result = scorer.run()
@@ -28,6 +29,7 @@ def test_run_failed(scorer, db_mock, monkeypatch):
     monkeypatch.setattr(scorer, "backup_spx", lambda cfg_id: (_ for _ in ()).throw(Exception("DB Error")))
     monkeypatch.setattr(scorer, "backup_vix", lambda cfg_id: None )
     monkeypatch.setattr(scorer, "backup_score", lambda cfg_id: 88.8)
+    monkeypatch.setattr(scorer, "backup_shiller", lambda cfg_id: None)
 
     with pytest.raises(Exception) as exc:
         scorer.run()

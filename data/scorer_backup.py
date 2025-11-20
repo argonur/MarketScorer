@@ -7,6 +7,7 @@ from config.config_loader import get_config
 from indicators.FearGreedIndicator import FearGreedIndicator
 from indicators.spxIndicator import SPXIndicator, SIMBOL
 from indicators.vixIndicator import VixIndicator
+from indicators.shillerPEIndicator import ShellerPEIndicator
 from core.scoreCalculator import ScoreCalculator
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ class ScorerBackup:
         self.fg = FearGreedIndicator()
         self.sp = SPXIndicator()
         self.vx = VixIndicator()
+        self.pe = ShellerPEIndicator()
 
     @staticmethod
     def to_native(val):
@@ -131,6 +133,30 @@ class ScorerBackup:
             self.db.get_connection().rollback()
             raise RuntimeError("Error al respaldar VixIndicator") from err
 
+    def backup_shiller(self, cfg_id):
+        try:
+            raw = self.pe.fetch_data()          # Valor del daily_cape
+            promedio = self.pe.cape_average
+            params = [
+                self.calc_date,
+                round(self.to_native(promedio), 2),
+                round(self.to_native(raw), 2),
+                round(self.to_native(0)),       # Espacio para Valor normalizado, aun no implementado
+                self.pe.url
+            ]
+            sql = """
+                INSERT INTO shiller_backup
+                    (calc_date, e10_calc, daily_cape, normalized_value, url)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (calc_date) DO NOTHING
+                """
+            insertado = self.db.execute_non_query(sql, params)
+            if insertado == 0:
+                logger.warning("[backup_shiller]: No se insertaron los registros para  %s: ya existen", self.calc_date)
+        except (ValueError, DatabaseError) as err:
+            self.db.get_connection().rollback()
+            raise RuntimeError("Error al respaldar: ") from err
+
     def backup_score(self, cfg_id):
         try:
             score = ScoreCalculator.get_global_score()
@@ -162,6 +188,7 @@ class ScorerBackup:
                 self.backup_fear_greed(cfg_id)
                 self.backup_spx(cfg_id)
                 self.backup_vix(cfg_id)
+                self.backup_shiller(cfg_id)
                 final_score = self.backup_score(cfg_id)
                 return {
                     "date":      self.calc_date,

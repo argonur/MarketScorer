@@ -85,7 +85,7 @@ def download_latest_file(
 
                 # Descargar el archivo temporalmente para calcular su hash
                 #print(f"⏳ Descargando archivo temporal para comparar hash...")
-                print(f"⏳ Comprobando...")
+                #print(f"⏳ Comprobando...")
                 temp_filepath = current_filepath.with_suffix(".tmp")
                 try:
                     respuesta = requests.get(download_url)
@@ -101,7 +101,7 @@ def download_latest_file(
 
                     # Comparar hashes
                     if existing_hash == new_hash:
-                        print("✅ El archivo no ha cambiado. No se descarga nuevamente.")
+                    #    print("✅ El archivo no ha cambiado. No se descarga nuevamente.")
                         temp_filepath.unlink()  # Eliminar archivo temporal
                         return str(latest_file)
                     else:

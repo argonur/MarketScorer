@@ -20,6 +20,8 @@ class ShellerPEIndicator(IndicatorModule):
         super().__init__()
         self.cape_average = None # Para almacenar el promedio calculado
         self.daily_cape = None
+        self.url = URL
+        self.last_close = None
 
     def fetch_data(self):
         try:
@@ -28,16 +30,12 @@ class ShellerPEIndicator(IndicatorModule):
             if not filepath:
                 print("❌ No se pudo obtener el archivo.")
                 return
-            print(f"📁 Archivo listo para procesar: {filepath}")
             self.process_data(filepath)
 
             # Obtener el ultimo cierre de S&P 500
             last_close_spx = round(self.get_last_close(SYMBOL), 2)
-            if last_close_spx:
-                print("📍 Ultimo cierre de S&P 500:", last_close_spx)
             self.daily_cape = round((last_close_spx / self.cape_average), 2)
-            if self.daily_cape:
-                print(f"👉 El CAPE diario es: {self.daily_cape}")
+            return self.daily_cape
         except Exception as e:
             print(e)
 
@@ -62,8 +60,7 @@ class ShellerPEIndicator(IndicatorModule):
             
             # Calcular promedio
             promedio = val_obtenidos.mean()
-            self.cape_average = promedio # Guardar el promedio en el atributo de clase
-            print(f"✅ Promedio de las últimas {MAX_VALUE} filas: {promedio:.2f}")
+            self.cape_average = promedio # Guardar el promedio en el atributo de clases
         except Exception as e:
             print(f"Error al abrir el archivo")
 
@@ -75,6 +72,7 @@ class ShellerPEIndicator(IndicatorModule):
                 print("No se pudieron obtener datos del indice S&P 500")
                 return None
             last_close = float(data['Close'].iloc[0])
+            self.last_close = last_close
             return last_close
         except Exception as e:
             print("Error al obtener el ultimo cierre", e)
@@ -83,5 +81,8 @@ if __name__ == "__main__":
     try:
         indicator = ShellerPEIndicator()
         indicator.fetch_data()
+        print(f"✅ Promedio de las últimas {MAX_VALUE} filas: {indicator.cape_average:.2f}")
+        print(f"👉 El CAPE diario es: {indicator.daily_cape}")
+        print("📍 Ultimo cierre de S&P 500:", round(indicator.last_close, 2))
     except Exception as e:
         print(e)
