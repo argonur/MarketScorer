@@ -77,7 +77,7 @@ def test_download_latest_file_existing_same_hash(mock_req, mock_url, mock_date, 
     result = file_downloader.download_latest_file("http://base/", "data.xls", str(tmp_path))
     assert result == str(existing_file)
     captured = capsys.readouterr()
-    assert "El archivo no ha cambiado" in captured.out
+    assert "Archivo más reciente " in captured.out
 
 @patch("utils.file_downloader.get_last_trading_date")
 @patch("utils.file_downloader._get_download_url", return_value = "http://fake/file.xls")
