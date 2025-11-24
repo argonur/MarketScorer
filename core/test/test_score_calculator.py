@@ -10,7 +10,9 @@ from core.scoreCalculator import ScoreCalculator, valid_weight
 def valid_weights():
     return {
         "FearGreedIndicator": valid_weight('fear_greed'),
-        "SPXIndicator": valid_weight('spx')
+        "SPXIndicator": valid_weight('spx'),
+        "VixIndicator": valid_weight('vix'),
+        "ShellerPEIndicator": valid_weight('shiller')
     }
 
 # Casos validos
@@ -102,29 +104,34 @@ def test_valid_weights():
     mock_indicator_fg = MagicMock()
     mock_indicator_spx = MagicMock()
     mock_indicador_vix = MagicMock()
+    mock_indicador_shiller = MagicMock()
 
     type(mock_indicator_fg).__name__ = "FearGreedIndicator"
     type(mock_indicator_spx).__name__ = "SPXIndicator"
     type(mock_indicador_vix).__name__ = "VixIndicator"
+    type(mock_indicador_shiller).__name__ = "ShellerPEIndicator"
 
     valid_weight_fg = valid_weight('fear_greed')
     valid_weight_spx = valid_weight('spx')
     valid_weight_vix = valid_weight('vix')
+    valid_weight_shiller = valid_weight('shiller')
 
     mock_indicator_fg.get_score.return_value = 0.4
     mock_indicator_spx.get_score.return_value = 0.28
     mock_indicador_vix.get_score.return_value = 0.08
+    mock_indicador_shiller.get_score.return_value = 0.08
 
-    indicators = [mock_indicator_fg, mock_indicator_spx, mock_indicador_vix]
+    indicators = [mock_indicator_fg, mock_indicator_spx, mock_indicador_vix, mock_indicador_shiller]
 
     weights = {
         "FearGreedIndicator": valid_weight_fg,
         "SPXIndicator": valid_weight_spx,
-        "VixIndicator": valid_weight_vix
+        "VixIndicator": valid_weight_vix,
+        "ShellerPEIndicator": valid_weight_shiller
         }
 
     calculator = ScoreCalculator(indicators, weights)
-    assert calculator.calculate_score().__round__() == 27
+    assert calculator.calculate_score().__round__() == 22
 
 def test_wrong_weights():
     mock_indicator = MagicMock()
