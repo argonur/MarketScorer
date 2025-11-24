@@ -22,6 +22,8 @@ class ShellerPEIndicator(IndicatorModule):
         self.daily_cape = None
         self.url = URL
         self.last_close = None
+        self.promedio_cape_30 = None
+        self.desv_cape_30 = None
 
     def fetch_data(self):
         try:
@@ -31,6 +33,7 @@ class ShellerPEIndicator(IndicatorModule):
                 print("❌ No se pudo obtener el archivo.")
                 return
             self.process_data(filepath)
+            self.process_data_30(filepath)
 
             # Obtener el ultimo cierre de S&P 500
             last_close_spx = round(self.get_last_close(SYMBOL), 2)
@@ -40,7 +43,16 @@ class ShellerPEIndicator(IndicatorModule):
             print(e)
 
     def normalize(self):
-        pass
+        try:
+            if self.desv_cape_30 <= 0.1:
+                score = 1
+            else:
+                z = (self.daily_cape - self.promedio_cape_30) / self.desv_cape_30
+                score = max(0, min(100, 100 - max(0, z) * 25)) / 100
+
+            return score
+        except Exception as e:
+            print(e)
 
     
     def process_data(self, file_path):
@@ -63,6 +75,24 @@ class ShellerPEIndicator(IndicatorModule):
             self.cape_average = promedio # Guardar el promedio en el atributo de clases
         except Exception as e:
             print(f"Error al abrir el archivo")
+    
+    def process_data_30(self, file_path):
+        max_value_cape_30 = 360
+        try:
+            df = pd.read_excel(file_path, sheet_name="Data")
+            columna_12 = df.iloc[:, 12]
+            columna_numerica = pd.to_numeric(columna_12, errors="coerce")
+            columna_limpia = columna_numerica.dropna()
+            val_obtenidos = columna_limpia.tail(max_value_cape_30)
+            if len(val_obtenidos) < max_value_cape_30:
+                print(f"⚠️ Solo se encontraron {len(val_obtenidos)} valores válidos (se necesitan {max_value_cape_30}).")
+
+            # Calcular promedio
+            self.promedio_cape_30 = round(val_obtenidos.mean(), 2)
+            self.desv_cape_30 = round(val_obtenidos.std(), 2)
+            
+        except Exception as e:
+            print(e)
 
     def get_last_close(self, symbol):
         try:
@@ -84,5 +114,8 @@ if __name__ == "__main__":
         print(f"✅ Promedio de las últimas {MAX_VALUE} filas: {indicator.cape_average:.2f}")
         print(f"👉 El CAPE diario es: {indicator.daily_cape}")
         print("📍 Ultimo cierre de S&P 500:", round(indicator.last_close, 2))
+        print(f"👉 Promedio de CAPE 30: {indicator.promedio_cape_30}")
+        print(f"📍 Desviación estandar CAPE 30: {indicator.desv_cape_30}")
+
     except Exception as e:
         print(e)
