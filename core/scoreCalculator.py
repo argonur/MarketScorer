@@ -1,8 +1,10 @@
 from typing import Callable, List, Dict
+from indicators import shillerPEIndicator
 from indicators.IndicatorModule import IndicatorModule
 from indicators.FearGreedIndicator import FearGreedIndicator
 from indicators.spxIndicator import SPXIndicator
 from indicators.vixIndicator import VixIndicator
+from indicators.shillerPEIndicator import ShellerPEIndicator
 from config.config_loader import get_config
 
 config = get_config() # Obtener la configuración
@@ -66,7 +68,8 @@ class ScoreCalculator:
         indicators = [
             SPXIndicator(),
             FearGreedIndicator(),
-            VixIndicator()
+            VixIndicator(),
+            ShellerPEIndicator()
         ]
 
         # Mapear pesos según nombre de clase
@@ -76,6 +79,7 @@ class ScoreCalculator:
                 (indicators[0], "spx"),
                 (indicators[1], "fear_greed"),
                 (indicators[2], "vix"),
+                (indicators[3], "shiller"),
             ]
         }
         return cls(indicators=indicators, weights=pesos)
