@@ -58,7 +58,7 @@ class ShellerPEIndicator(IndicatorModule):
         # Asegurar que los datos estén cargados
             if self.daily_cape is None or self.promedio_cape_30 is None or self.desv_cape_30 is None:
                 self.fetch_data()
-            return self.normalize()
+            return round(self.normalize(), 2)
 
     
     def process_data(self, file_path):
@@ -118,12 +118,12 @@ if __name__ == "__main__":
         indicator = ShellerPEIndicator()
         indicator.fetch_data()
         indicator.normalize()
-        print(f"✅ Promedio de las últimas {MAX_VALUE} filas: {indicator.cape_average:.2f}")
-        print(f"👉 El CAPE diario es: {indicator.daily_cape}")
-        print("📍 Ultimo cierre de S&P 500:", round(indicator.last_close, 2))
-        print(f"👉 Promedio de CAPE 30: {indicator.promedio_cape_30}")
-        print(f"📍 Desviación estandar CAPE 30: {indicator.desv_cape_30}")
-        print(f"👉 Score: {indicator.get_score()}")
+        print(f"Promedio de los 10 años de Real Earnings: {indicator.cape_average:.2f}")
+        print(f"El CAPE diario es: {indicator.daily_cape}")
+        print("Ultimo cierre de S&P 500:", round(indicator.last_close, 2))
+        print(f"Promedio de CAPE 30: {indicator.promedio_cape_30}")
+        print(f"Desviación estandar CAPE 30: {indicator.desv_cape_30}")
+        print(f"Score final: {indicator.get_score()}")
 
     except Exception as e:
         print(e)
