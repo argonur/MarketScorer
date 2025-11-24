@@ -105,6 +105,9 @@ class FakeSPX:
 class FakeVix:
     def normalize(self): return 0.08
 
+class FakeShiller:
+    def get_score(self): return 0.08
+
 class FakeScore:
     def __init__(self, indicators, weights): pass
     def calculate_score(self): return 61.7
@@ -136,6 +139,7 @@ def test_envio_mensaje_con_gmt6_fijo(monkeypatch):
         spx_cls=FakeSPX,
         fg_cls=lambda: FakeFG(68, "greed"),
         vix_cls=FakeVix,
+        shiller_cls=FakeShiller,
         score_cls=FakeScore,
     )
 
