@@ -2,6 +2,8 @@ from unittest import mock
 import pytest
 from unittest.mock import patch, MagicMock
 import db_user_config
+import os
+import utils.db_user_config as db_user_config
 
 # Creamos un nuevo fixture para simular la consulta a la DB
 @pytest.fixture
@@ -13,7 +15,8 @@ def mock_conn_cursor():
     return mock_conn, mock_cursor
 
 @patch("db_user_config.psycopg2.connect")
-def test_get_user_config_encontrado(mock_connect, mock_conn_cursor):
+def test_get_user_config_encontrado(mock_connect, mock_conn_cursor, monkeypatch):
+    monkeypatch.setattr(db_user_config, "DB_URL", "postgresql://fake_user:fake_pass@localhost:5432/fake_db")
     mock_conn, mock_cursor = mock_conn_cursor
     mock_connect.return_value = mock_conn
 
@@ -27,7 +30,8 @@ def test_get_user_config_encontrado(mock_connect, mock_conn_cursor):
     mock_conn.close.assert_called_once()
 
 @patch("db_user_config.psycopg2.connect")
-def test_get_user_config_no_encontrado(mock_connect, mock_conn_cursor):
+def test_get_user_config_no_encontrado(mock_connect, mock_conn_cursor, monkeypatch):
+    monkeypatch.setattr(db_user_config, "DB_URL", "postgresql://fake_user:fake_pass@localhost:5432/fake_db")
     mock_conn, mock_cursor = mock_conn_cursor
     mock_connect.return_value = mock_conn
 
@@ -44,7 +48,8 @@ def test_get_user_config_no_encontrado(mock_connect, mock_conn_cursor):
 # Agregar tests que valide el ValueError de get_user_config
 
 @patch("db_user_config.psycopg2.connect")
-def test_set_user_config_user_existente(mock_connect, mock_conn_cursor, capsys):
+def test_set_user_config_user_existente(mock_connect, mock_conn_cursor, capsys, monkeypatch):
+    monkeypatch.setattr(db_user_config, "DB_URL", "postgresql://fake_user:fake_pass@localhost:5432/fake_db")
     mock_conn, mock_cursor = mock_conn_cursor
     mock_connect.return_value = mock_conn
 
@@ -58,7 +63,8 @@ def test_set_user_config_user_existente(mock_connect, mock_conn_cursor, capsys):
     mock_conn.commit.assert_not_called()
 
 @patch("db_user_config.psycopg2.connect")
-def test_set_user_config_new_user(mock_connect, mock_conn_cursor, capsys):
+def test_set_user_config_new_user(mock_connect, mock_conn_cursor, capsys, monkeypatch):
+    monkeypatch.setattr(db_user_config, "DB_URL", "postgresql://fake_user:fake_pass@localhost:5432/fake_db")
     mock_conn, mock_cursor = mock_conn_cursor
     mock_connect.return_value = mock_conn
 
@@ -86,7 +92,8 @@ def test_set_user_config_new_user(mock_connect, mock_conn_cursor, capsys):
     mock_conn.commit.assert_called_once()
 
 @patch("db_user_config.psycopg2.connect")
-def test_update_user_config_current_no_existe(mock_connect, mock_conn_cursor, capsys):
+def test_update_user_config_current_no_existe(mock_connect, mock_conn_cursor, capsys, monkeypatch):
+    monkeypatch.setattr(db_user_config, "DB_URL", "postgresql://fake_user:fake_pass@localhost:5432/fake_db")
     mock_conn, mock_cursor = mock_conn_cursor
     mock_connect.return_value = mock_conn
 
@@ -98,7 +105,8 @@ def test_update_user_config_current_no_existe(mock_connect, mock_conn_cursor, ca
     assert "no existe" in captured.out
 
 @patch("db_user_config.psycopg2.connect")
-def test_update_user_config_new_identifier_already_exist(mock_connect, mock_conn_cursor, capsys):
+def test_update_user_config_new_identifier_already_exist(mock_connect, mock_conn_cursor, capsys, monkeypatch):
+    monkeypatch.setattr(db_user_config, "DB_URL", "postgresql://fake_user:fake_pass@localhost:5432/fake_db")
     mock_conn, mock_cursor = mock_conn_cursor
     mock_connect.return_value = mock_conn
 
@@ -112,7 +120,8 @@ def test_update_user_config_new_identifier_already_exist(mock_connect, mock_conn
     assert "ya está en uso" in captured.out
 
 @patch("db_user_config.psycopg2.connect")
-def test_update_user_config_exitoso(mock_connect, mock_conn_cursor, capsys):
+def test_update_user_config_exitoso(mock_connect, mock_conn_cursor, capsys, monkeypatch):
+    monkeypatch.setattr(db_user_config, "DB_URL", "postgresql://fake_user:fake_pass@localhost:5432/fake_db")
     mock_conn, mock_cursor = mock_conn_cursor
     mock_connect.return_value = mock_conn
 
@@ -137,7 +146,8 @@ def test_update_user_config_exitoso(mock_connect, mock_conn_cursor, capsys):
     mock_conn.commit.assert_called_once()
 
 @patch("db_user_config.psycopg2.connect")
-def test_update_user_config_sin_cambio_de_identifier(mock_connect, mock_conn_cursor, capsys):
+def test_update_user_config_sin_cambio_de_identifier(mock_connect, mock_conn_cursor, capsys, monkeypatch):
+    monkeypatch.setattr(db_user_config, "DB_URL", "postgresql://fake_user:fake_pass@localhost:5432/fake_db")
     mock_conn, mock_cursor = mock_conn_cursor
     mock_connect.return_value = mock_conn
     # existe el actual
@@ -168,7 +178,8 @@ def test_get_user_config_exception_print_y_cierre(mock_connect, mock_conn_cursor
         assert res is None
 
 @patch("db_user_config.psycopg2.connect")
-def test_set_user_config_except_en_insert(mock_connect, mock_conn_cursor, capsys):
+def test_set_user_config_except_en_insert(mock_connect, mock_conn_cursor, capsys, monkeypatch):
+    monkeypatch.setattr(db_user_config, "DB_URL", "postgresql://fake_user:fake_pass@localhost:5432/fake_db")
     mock_conn, mock_cursor = mock_conn_cursor
     mock_connect.return_value = mock_conn
     mock_cursor.fetchone.return_value = None
@@ -186,7 +197,8 @@ def test_set_user_config_except_en_insert(mock_connect, mock_conn_cursor, capsys
     mock_conn.close.assert_called_once()
 
 @patch("db_user_config.psycopg2.connect")
-def test_update_user_config_except_en_update(mock_connect, mock_conn_cursor, capsys):
+def test_update_user_config_except_en_update(mock_connect, mock_conn_cursor, capsys, monkeypatch):
+    monkeypatch.setattr(db_user_config, "DB_URL", "postgresql://fake_user:fake_pass@localhost:5432/fake_db")
     mock_conn, mock_cursor = mock_conn_cursor
     mock_connect.return_value = mock_conn
     mock_cursor.fetchone.side_effect = [(1,), None]  # existe actual, nuevo libre
@@ -218,8 +230,9 @@ def test_update_user_config_value_error_db_url(monkeypatch):
     with pytest.raises(ValueError):
         db_user_config.update_user_config("new@example.com", "old@example.com","2222")
 
-def test_set_user_cursor_falla_cierra_solo_conn(capsys):
+def test_set_user_cursor_falla_cierra_solo_conn(capsys, monkeypatch):
     # Creamos un mock de conexión con close espiable
+    monkeypatch.setattr(db_user_config, "DB_URL", "postgresql://fake_user:fake_pass@localhost:5432/fake_db")
     mock_conn = MagicMock()
     mock_conn.cursor.side_effect = Exception("falló el cursor")
 
@@ -234,8 +247,9 @@ def test_set_user_cursor_falla_cierra_solo_conn(capsys):
         # Verificamos que se haya cerrado el cursor inexistente
         mock_conn.close.assert_called_once()
 
-def test_update_cursor_falla_cierra_solo_conn(capsys):
+def test_update_cursor_falla_cierra_solo_conn(capsys, monkeypatch):
     # Creamos un mock de conexión con close espiable
+    monkeypatch.setattr(db_user_config, "DB_URL", "postgresql://fake_user:fake_pass@localhost:5432/fake_db")
     mock_conn = MagicMock()
     mock_conn.cursor.side_effect = Exception("falló el cursor")
 
@@ -250,7 +264,8 @@ def test_update_cursor_falla_cierra_solo_conn(capsys):
         # Verificamos que se haya cerrado el cursor inexistente
         mock_conn.close.assert_called_once()
 
-def test_set_user_connect_falla_imprime_error_no_intenta_cerrar(capsys):
+def test_set_user_connect_falla_imprime_error_no_intenta_cerrar(capsys, monkeypatch):
+    monkeypatch.setattr(db_user_config, "DB_URL", "postgresql://fake_user:fake_pass@localhost:5432/fake_db")
     mensaje = "falló conexión"
 
     # Simulamos que psycopg2.connect lanza excepcion al intentar abrir una conexion
@@ -265,7 +280,8 @@ def test_set_user_connect_falla_imprime_error_no_intenta_cerrar(capsys):
     # Nos aseguramos que el intento de conexión ocurrio exactamente una vez
     mock_connect.assert_called_once()
 
-def test_update_user_connect_falla_imprime_error_no_intenta_cerrar(capsys):
+def test_update_user_connect_falla_imprime_error_no_intenta_cerrar(capsys, monkeypatch):
+    monkeypatch.setattr(db_user_config, "DB_URL", "postgresql://fake_user:fake_pass@localhost:5432/fake_db")
     mensaje = "falló conexión"
 
     # Simulamos que psycopg2.connect lanza excepcion al intentar abrir una conexion
