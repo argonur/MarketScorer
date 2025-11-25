@@ -137,11 +137,12 @@ class ScorerBackup:
         try:
             raw = self.pe.fetch_data()          # Valor del daily_cape
             promedio = self.pe.cape_average
+            normalizado = self.pe.get_score()
             params = [
                 self.calc_date,
                 round(self.to_native(promedio), 2),
                 round(self.to_native(raw), 2),
-                round(self.to_native(0)),       # Espacio para Valor normalizado, aun no implementado
+                round(self.to_native(normalizado), 2),
                 self.pe.url
             ]
             sql = """
