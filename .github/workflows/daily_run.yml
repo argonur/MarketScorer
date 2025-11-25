@@ -23,7 +23,7 @@ jobs:
         env:
           CHAT_ID: ${{ secrets.CHAT_ID }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
         run: |
           mkdir -p htmlcov/reports
           python tests/run_tests.py
