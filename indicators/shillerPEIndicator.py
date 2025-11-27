@@ -7,14 +7,14 @@ import os
 import pandas as pd
 
 load_dotenv()
-URL = os.getenv("SHELLER_PE_URL")
-NAME = os.getenv("SHILLER_PE_ARCHIVE_NAME")
-PATH_DIR = os.getenv("SAVE_PATH")
+URL = os.getenv("SHILLER_PE_URL")
+NAME = "latest.xls"
+PATH_DIR = os.getenv("SAVE_PATH", "data/inputs")
 MAX_VALUE = 120
 start_date, end_date = yfinance_window_for_last_close()
 SYMBOL = "^SPX"
 
-class ShellerPEIndicator(IndicatorModule):
+class ShillerPEIndicator(IndicatorModule):
     #Constructor
     def __init__(self):
         super().__init__()
@@ -26,45 +26,46 @@ class ShellerPEIndicator(IndicatorModule):
         self.desv_cape_30 = None
 
     def fetch_data(self):
-        try:
             # Descargar el archivo mas reciente
             filepath = download_latest_file(base_url=URL, file_name=NAME, save_dir=PATH_DIR)
             if not filepath:
-                print("❌ No se pudo obtener el archivo.")
-                return
-            self.process_data(filepath)
-            self.process_data_30(filepath)
+                raise RuntimeError("No se pudo descargar el archivo Shiller PE")
+
+            self._process_data(filepath)
+            self._process_data_30(filepath)
 
             # Obtener el ultimo cierre de S&P 500
-            last_close_spx = round(self.get_last_close(SYMBOL), 2)
-            self.daily_cape = round((last_close_spx / self.cape_average), 2)
+            last_close_spx = self.get_last_close(SYMBOL)
+            if last_close_spx is None or self.cape_average is None:
+                raise RuntimeError("Datos insuficientes para calcular CAPE diario")
+
+            self.daily_cape = round(last_close_spx / self.cape_average, 2)
             return self.daily_cape
-        except Exception as e:
-            print(e)
 
     def normalize(self):
-        try:
-            if self.desv_cape_30 <= 0.1:
-                score = 1.0
-            else:
-                z = (self.daily_cape - self.promedio_cape_30) / self.desv_cape_30
-                score = max(0, min(100, 100 - max(0, z) * 25)) / 100
+        if self.daily_cape is None or self.promedio_cape_30 is None or self.desv_cape_30 is None:
+            raise RuntimeError("No se puede normalizar: faltan datos criticos")
 
-            return score
-        except Exception as e:
-            print(f"Error en normalize: {e}")
+        if self.desv_cape_30 <= 0.1:
+            return 1.0   # salir inmediatamente, no recalcular
+
+        z = (self.daily_cape - self.promedio_cape_30) / self.desv_cape_30
+        score = max(0, min(100, 100 - max(0, z) * 25)) / 100
+        return score
 
     def get_score(self):
-        # Asegurar que los datos estén cargados
-            if self.daily_cape is None or self.promedio_cape_30 is None or self.desv_cape_30 is None:
-                self.fetch_data()
-            return round(self.normalize(), 2)
-
+        if self.daily_cape is None or self.promedio_cape_30 is None or self.desv_cape_30 is None:
+            self.fetch_data()
+        value = self.normalize()
+        return round(value, 2)
     
-    def process_data(self, file_path):
+    def _process_data(self, file_path):
         try:
+            # Detectar extensión y elegir engine
+            ext = str(file_path).split(".")[-1].lower()
+            engine = "xlrd" if ext == "xls" else "openpyxl"
             # Leer el archivo
-            df = pd.read_excel(file_path, sheet_name="Data")
+            df = pd.read_excel(file_path, sheet_name="Data", engine=engine)
             # Leer la columna correspondiente
             columna_10 = df.iloc[:, 10]
             # Conersión y limpiesa de datos
@@ -75,55 +76,49 @@ class ShellerPEIndicator(IndicatorModule):
             # Se verifica que si haya datos suficientes
             if len(val_obtenidos) < MAX_VALUE:
                 print(f"⚠️ Solo se encontraron {len(val_obtenidos)} valores válidos (se necesitan {MAX_VALUE}).")
-            
-            # Calcular promedio
-            promedio = val_obtenidos.mean()
-            self.cape_average = promedio # Guardar el promedio en el atributo de clases
-        except Exception as e:
-            print(f"Error al abrir el archivo")
-    
-    def process_data_30(self, file_path):
-        max_value_cape_30 = 360
-        try:
-            df = pd.read_excel(file_path, sheet_name="Data")
-            columna_12 = df.iloc[:, 12]
-            columna_numerica = pd.to_numeric(columna_12, errors="coerce")
-            columna_limpia = columna_numerica.dropna()
-            val_obtenidos = columna_limpia.tail(max_value_cape_30)
-            if len(val_obtenidos) < max_value_cape_30:
-                print(f"⚠️ Solo se encontraron {len(val_obtenidos)} valores válidos (se necesitan {max_value_cape_30}).")
 
-            # Calcular promedio
-            self.promedio_cape_30 = round(val_obtenidos.mean(), 2)
-            self.desv_cape_30 = round(val_obtenidos.std(), 2)
+            if val_obtenidos.empty:
+                raise RuntimeError("Archivo Shiller PE no contiene datos válidos en la columna esperada")
             
+            # Calcular promedio
+            self.cape_average = val_obtenidos.mean()   # Guardar el promedio en el atributo de clases
         except Exception as e:
-            print(e)
+            raise RuntimeError(f"Error al procesar el archivo {file_path}: {e}")
+    
+    def _process_data_30(self, file_path):
+        ext = str(file_path).split(".")[-1].lower()
+        engine = "xlrd" if ext == "xls" else "openpyxl"
+        df = pd.read_excel(file_path, sheet_name="Data", engine=engine)
+        columna_12 = pd.to_numeric(df.iloc[:, 12], errors="coerce").dropna()
+        val_obtenidos = columna_12.tail(360)
+
+        if len(val_obtenidos) < 360:
+            print(f"⚠️ Solo {len(val_obtenidos)} valores válidos (se necesitan 360)")
+        
+        if val_obtenidos.empty:
+            raise RuntimeError("Archivo Shiller PE no contiene datos válidos en la columna esperada")
+
+        self.promedio_cape_30 = val_obtenidos.mean() if not val_obtenidos.empty else None
+        self.desv_cape_30 = val_obtenidos.std() if not val_obtenidos.empty else None
 
     def get_last_close(self, symbol):
-        try:
-            sp500 = yf.Ticker(symbol)
-            data = sp500.history(start=start_date, end=end_date, auto_adjust=True)
-            if data.empty:
-                print("No se pudieron obtener datos del indice S&P 500")
-                return None
-            last_close = float(data['Close'].iloc[0])
-            self.last_close = last_close
-            return last_close
-        except Exception as e:
-            print("Error al obtener el ultimo cierre", e)
+        sp500 = yf.Ticker(symbol)
+        data = sp500.history(start=start_date, end=end_date, auto_adjust=True)
+        if data.empty:
+            print("❌ No se pudieron obtener datos del índice S&P 500")
+            return None
+        return float(data['Close'].iloc[0])
 
 if __name__ == "__main__":
     try:
-        indicator = ShellerPEIndicator()
+        indicator = ShillerPEIndicator()
         indicator.fetch_data()
-        indicator.normalize()
-        print(f"Promedio de los 10 años de Real Earnings: {indicator.cape_average:.2f}")
+        print(f"Promedio de los 10 años de Real Earnings: {indicator.cape_average}")
         print(f"El CAPE diario es: {indicator.daily_cape}")
-        print("Ultimo cierre de S&P 500:", round(indicator.last_close, 2))
+        print("Ultimo cierre de S&P 500:", indicator.last_close)
         print(f"Promedio de CAPE 30: {indicator.promedio_cape_30}")
         print(f"Desviación estandar CAPE 30: {indicator.desv_cape_30}")
         print(f"Score final: {indicator.get_score()}")
 
     except Exception as e:
-        print(e)
+        print(f"Error critico en ShillerPEIndicator: {e}")
