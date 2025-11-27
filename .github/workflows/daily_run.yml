@@ -17,7 +17,8 @@ jobs:
       env:
         CHAT_ID: ${{ secrets.CHAT_ID }}
         BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-        BACKUP_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        SHILLER_PE_URL: ${{ secrets.SHILLER_PE_URL }}
         SAVE_PATH: data/temp
 
     steps:
