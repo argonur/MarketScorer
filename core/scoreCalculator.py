@@ -4,7 +4,7 @@ from indicators.IndicatorModule import IndicatorModule
 from indicators.FearGreedIndicator import FearGreedIndicator
 from indicators.spxIndicator import SPXIndicator
 from indicators.vixIndicator import VixIndicator
-from indicators.shillerPEIndicator import ShellerPEIndicator
+from indicators.shillerPEIndicator import ShillerPEIndicator
 from config.config_loader import get_config
 
 config = get_config() # Obtener la configuración
@@ -69,7 +69,7 @@ class ScoreCalculator:
             SPXIndicator(),
             FearGreedIndicator(),
             VixIndicator(),
-            ShellerPEIndicator()
+            ShillerPEIndicator()
         ]
 
         # Mapear pesos según nombre de clase

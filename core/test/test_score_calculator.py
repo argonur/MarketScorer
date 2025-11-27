@@ -12,7 +12,7 @@ def valid_weights():
         "FearGreedIndicator": valid_weight('fear_greed'),
         "SPXIndicator": valid_weight('spx'),
         "VixIndicator": valid_weight('vix'),
-        "ShellerPEIndicator": valid_weight('shiller')
+        "ShillerPEIndicator": valid_weight('shiller')
     }
 
 # Casos validos
@@ -109,7 +109,7 @@ def test_valid_weights():
     type(mock_indicator_fg).__name__ = "FearGreedIndicator"
     type(mock_indicator_spx).__name__ = "SPXIndicator"
     type(mock_indicador_vix).__name__ = "VixIndicator"
-    type(mock_indicador_shiller).__name__ = "ShellerPEIndicator"
+    type(mock_indicador_shiller).__name__ = "ShillerPEIndicator"
 
     valid_weight_fg = valid_weight('fear_greed')
     valid_weight_spx = valid_weight('spx')
@@ -127,7 +127,7 @@ def test_valid_weights():
         "FearGreedIndicator": valid_weight_fg,
         "SPXIndicator": valid_weight_spx,
         "VixIndicator": valid_weight_vix,
-        "ShellerPEIndicator": valid_weight_shiller
+        "ShillerPEIndicator": valid_weight_shiller
         }
 
     calculator = ScoreCalculator(indicators, weights)
