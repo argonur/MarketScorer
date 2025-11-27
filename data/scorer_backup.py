@@ -7,7 +7,7 @@ from config.config_loader import get_config
 from indicators.FearGreedIndicator import FearGreedIndicator
 from indicators.spxIndicator import SPXIndicator, SIMBOL
 from indicators.vixIndicator import VixIndicator
-from indicators.shillerPEIndicator import ShellerPEIndicator
+from indicators.shillerPEIndicator import ShillerPEIndicator
 from core.scoreCalculator import ScoreCalculator
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class ScorerBackup:
         self.fg = FearGreedIndicator()
         self.sp = SPXIndicator()
         self.vx = VixIndicator()
-        self.pe = ShellerPEIndicator()
+        self.pe = ShillerPEIndicator()
 
     @staticmethod
     def to_native(val):
