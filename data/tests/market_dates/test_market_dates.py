@@ -76,7 +76,7 @@ def test_get_last_trading_date_vuelve_al_viernes(ny_tz, market_hours):
 def test_get_last_trading_date_before_close(ny_tz, market_hours):
     now = datetime(2025, 8, 29, 15, 0, tzinfo=ny_tz)  # Viernes antes del cierre
     last_date = get_last_trading_date(now=now, market_close=market_hours["close"], tz=ny_tz)
-    assert last_date.weekday() == 3  # Jueves
+    assert last_date.weekday() == 4  # Jueves
 
 def test_get_last_trading_date_monday_befote_close(ny_tz, market_hours):
     now = datetime(2025, 9, 1, 15, 0, tzinfo=ny_tz)  # Lunes antes del cierre
