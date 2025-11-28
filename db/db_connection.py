@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-DB_URL = os.getenv("BACKUP_DATABASE_URL")
+DB_URL = os.getenv("DATABASE_URL")
 
 class Database:
     _instance = None

@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from indicators.spxIndicator import SPXIndicator
 from indicators.FearGreedIndicator import FearGreedIndicator
 from indicators.vixIndicator import VixIndicator
-from indicators.shillerPEIndicator import ShellerPEIndicator
+from indicators.shillerPEIndicator import ShillerPEIndicator
 from core.scoreCalculator import ScoreCalculator, valid_weight
 from utils.db_user_config import get_user_config
 #from data.market_dates import market_now
@@ -78,7 +78,7 @@ class TelegramNotifier:
     @staticmethod
     def enviar_reporte_mercado(post_fn=requests.post, config_fn=get_user_config,
         getenv_fn=os.getenv, spx_cls=SPXIndicator,
-        fg_cls=FearGreedIndicator, vix_cls=VixIndicator, shiller_cls = ShellerPEIndicator, score_cls=ScoreCalculator) -> str:
+        fg_cls=FearGreedIndicator, vix_cls=VixIndicator, shiller_cls = ShillerPEIndicator, score_cls=ScoreCalculator) -> str:
 
         """
         Calcula indicadores, arma el mensaje y lo envía.
@@ -102,7 +102,7 @@ class TelegramNotifier:
             "SPXIndicator": spx_weight,
             "FearGreedIndicator": fear_greed_weight,
             "VixIndicator": vix_weight,
-            "ShellerPEIndicator": shiller_weight
+            "ShillerPEIndicator": shiller_weight
         }
 
         # 3️⃣ Calcular score final
