@@ -1,91 +1,91 @@
 import pytest
-import hashlib
+import io
+import pandas as pd
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch, MagicMock
 from utils import file_downloader
 
-# ---------- _get_download_url ----------
+# ---------- _extract_filename ----------
+def test_extract_filename_ok():
+    header = 'attachment; filename="ie_data.xls"'
+    assert file_downloader._extract_filename(header) == "ie_data.xls"
+
+def test_extract_filename_none():
+    assert file_downloader._extract_filename("") is None
+
+# ---------- _get_download_links ----------
 @patch("utils.file_downloader.requests.get")
-def test_get_download_url_ok(mock_get):
-    html = '<a data-aid="DOWNLOAD_DOCUMENT_LINK_RENDERED" href="file.xls">Download </a>'
+def test_get_download_links_ok(mock_get):
+    html = """
+    <a data-aid="DOWNLOAD_DOCUMENT_LINK_RENDERED" href="file1.xls">Download</a>
+    <span>ie_data</span>
+    <a data-aid="DOWNLOAD_DOCUMENT_LINK_RENDERED" href="file2.xls">Download</a>
+    """
     mock_get.return_value.status_code = 200
     mock_get.return_value.content = html.encode()
-    url = file_downloader._get_download_url("http://base/")
-    assert url == "http://base/file.xls"
+    links = file_downloader._get_download_links("http://base/")
+    assert isinstance(links, list)
+    assert links[0][0].startswith("http://base/file1.xls")
+    assert "ie_data" in links[0][1].lower()
 
 @patch("utils.file_downloader.requests.get")
-def test_get_download_url_error_status(mock_get, capsys):
+def test_get_download_links_error_status(mock_get):
     mock_get.return_value.status_code = 500
     mock_get.return_value.content = b""
-    url = file_downloader._get_download_url("http://base/")
-    assert url is None
-    captured = capsys.readouterr()
-    assert "Error al cargar la" in captured.out
+    links = file_downloader._get_download_links("http://base/")
+    assert links == []
 
-@patch("utils.file_downloader.requests.get")
-def test_get_download_url_no_button(mock_get, capsys):
-    mock_get.return_value.status_code = 200
-    mock_get.return_value.content = b"<html></html>"
-    url = file_downloader._get_download_url("http://base/")
-    assert url is None
-    captured = capsys.readouterr()
-    assert "No se encontró el botón" in captured.out
+# ---------- _is_valid_ie_data ----------
+def test_is_valid_ie_data_ok(tmp_path):
+    # 13 columnas numéricas
+    df = pd.DataFrame({str(i): range(10) for i in range(13)})
+    file_path = tmp_path / "test.xlsx"
+    # No forzar engine; que pandas use el disponible
+    df.to_excel(file_path, sheet_name="Data", index=False)
+    assert file_downloader._is_valid_ie_data(str(file_path), "ie_data")
+
+
+def test_is_valid_ie_data_fail(tmp_path):
+    df = pd.DataFrame({"A": range(5)})
+    file_path = tmp_path / "bad.xlsx"
+    df.to_excel(file_path, sheet_name="Other", index=False, engine="openpyxl")
+    assert not file_downloader._is_valid_ie_data(str(file_path), "wrong")
 
 # ---------- download_latest_file ----------
-@patch("utils.file_downloader.get_last_trading_date")
-@patch("utils.file_downloader._get_download_url", return_value = "http://fake/file.xls")
+@patch("utils.file_downloader._get_download_links")
 @patch("utils.file_downloader.requests.get")
-def test_download_latest_file_new(mock_req, mock_url, mock_date, tmp_path):
-    mock_date.return_value = file_downloader.datetime(2024, 1, 1).date()
-    mock_req.return_value.status_code = 200
-    mock_req.return_value.content = b"contenido"
-    result = file_downloader.download_latest_file("http://base/", "data.xls", str(tmp_path))
+def test_download_latest_file_ok(mock_req, mock_links, tmp_path):
+    mock_links.return_value = [("http://fake/file.xlsx", "ie_data")]
+
+    # Excel válido en memoria
+    df = pd.DataFrame({str(i): range(10) for i in range(13)})
+    buf = io.BytesIO()
+    df.to_excel(buf, sheet_name="Data", index=False)
+    buf.seek(0)
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.headers = {"Content-Disposition": 'attachment; filename="ie_data.xlsx"'}
+    mock_resp.iter_content = lambda chunk_size: [buf.getvalue()]
+    mock_req.return_value = mock_resp
+
+    result = file_downloader.download_latest_file("http://base/", "data.xlsx", str(tmp_path))
+    assert result is not None
     assert Path(result).exists()
-    assert Path(result).read_bytes() == b"contenido"
 
-@patch("utils.file_downloader.get_last_trading_date")
-@patch("utils.file_downloader._get_download_url", return_value = None)
-def test_download_latest_file_no_url(mock_url, mock_date, tmp_path, capsys):
-    mock_date.return_value = file_downloader.datetime(2024, 1, 1).date()
+
+@patch("utils.file_downloader._get_download_links", return_value=[])
+def test_download_latest_file_no_links(mock_links, tmp_path):
     result = file_downloader.download_latest_file("http://base/", "data.xls", str(tmp_path))
     assert result is None
-    captured = capsys.readouterr()
-    assert "No se pudo obtener" in captured.out
 
-# ---------- Cubrir las excepciones ----------
-@patch("utils.file_downloader.get_last_trading_date")
-@patch("utils.file_downloader._get_download_url", return_value=None)
-def test_download_latest_file_no_url(mock_url, mock_date, tmp_path, capsys):
-    mock_date.return_value = file_downloader.datetime(2024,1,1).date()
-    result = file_downloader.download_latest_file("http://base/", "data.xls", str(tmp_path))
-    assert result is None
-    captured = capsys.readouterr()
-    assert "❌ No se pudo obtener la URL" in captured.out
-
-@patch("utils.file_downloader.get_last_trading_date")
-@patch("utils.file_downloader._get_download_url", return_value="http://fake/file.xls")
+@patch("utils.file_downloader._get_download_links", return_value=[("http://fake/file.xls", "other")])
 @patch("utils.file_downloader.requests.get")
-def test_download_latest_file_error_descarga(mock_req, mock_url, mock_date, tmp_path, capsys):
-    mock_date.return_value = file_downloader.datetime(2024,1,1).date()
-    mock_req.return_value.status_code = 404
-    mock_req.return_value.content = b""
+def test_download_latest_file_invalid_content(mock_req, mock_links, tmp_path):
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.headers = {"Content-Disposition": 'attachment; filename="wrong.xls"'}
+    mock_resp.iter_content = lambda chunk_size: [b"not an excel"]
+    mock_req.return_value = mock_resp
     result = file_downloader.download_latest_file("http://base/", "data.xls", str(tmp_path))
     assert result is None
-    captured = capsys.readouterr()
-    assert "❌ Error al descargar el archivo" in captured.out
-
-@patch("utils.file_downloader.get_last_trading_date")
-@patch("utils.file_downloader._get_download_url", side_effect=Exception("boom"))
-def test_download_latest_file_excepcion_general(mock_url, mock_date, tmp_path, capsys):
-    mock_date.return_value = file_downloader.datetime(2024,1,1).date()
-    result = file_downloader.download_latest_file("http://base/", "data.xls", str(tmp_path))
-    assert result is None
-    captured = capsys.readouterr()
-    assert "Error al descargar el archivo" in captured.out
-
-@patch("utils.file_downloader.requests.get", side_effect=Exception("fallo requests"))
-def test_get_download_url_excepcion(mock_req, capsys):
-    url = file_downloader._get_download_url("http://base/")
-    assert url is None
-    captured = capsys.readouterr()
-    assert "❌ Error al obtener la URL de descarga" in captured.out
