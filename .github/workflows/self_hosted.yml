@@ -11,7 +11,7 @@ jobs:
   test:
     runs-on: [self-hosted, local]
     container:
-      image: dyeosvaldoperalta/marketscorer:1.5.1
+      image: dyeosvaldoperalta/marketscorer:1.5.2
       env: 
         SAVE_PATH: data/temp   # 👈 aquí defines la ruta
 

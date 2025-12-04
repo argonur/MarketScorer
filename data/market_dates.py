@@ -7,6 +7,12 @@ MARKET_TZ = ZoneInfo("America/New_York")
 MARKET_OPEN = time(9, 30)
 MARKET_CLOSE = time(16, 0)
 
+try:
+    from data import market_calendar as mc
+    _HAS_CALENDAR = True
+except ImportError:
+    _HAS_CALENDAR = False
+
 def market_now(now: datetime | None = None, tz: ZoneInfo = MARKET_TZ) -> datetime:
     """
     Devuelve un datetime 'aware' en la zona del mercado.
@@ -39,6 +45,13 @@ def get_last_trading_date(now: datetime | None = None, market_close: time = MARK
     - Si es fin de semana -> retrocede hasta el viernes más cercano
     No considera feriados (si 'hoy' no abrió, seguirá devolviendo 'hoy' tras el cierre).
     """
+    if _HAS_CALENDAR:
+        try:
+            return mc.get_last_valid_trading_day("^SPX", now)
+        except Exception:
+            # Si falla, usar fallback
+            pass
+
     current = market_now(now, tz)
 
     # Si es fin de semana, retrocede al último día hábil anterior

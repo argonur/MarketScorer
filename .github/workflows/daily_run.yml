@@ -13,7 +13,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: dyeosvaldoperalta/marketscorer:1.5.1
+      image: dyeosvaldoperalta/marketscorer:1.5.2
       env:
         CHAT_ID: ${{ secrets.CHAT_ID }}
         BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
