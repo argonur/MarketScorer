@@ -45,13 +45,6 @@ def get_last_trading_date(now: datetime | None = None, market_close: time = MARK
     - Si es fin de semana -> retrocede hasta el viernes más cercano
     No considera feriados (si 'hoy' no abrió, seguirá devolviendo 'hoy' tras el cierre).
     """
-    if _HAS_CALENDAR:
-        try:
-            return mc.get_last_valid_trading_day("^SPX", now)
-        except Exception:
-            # Si falla, usar fallback
-            pass
-
     current = market_now(now, tz)
 
     # Si es fin de semana, retrocede al último día hábil anterior
@@ -64,13 +57,24 @@ def get_last_trading_date(now: datetime | None = None, market_close: time = MARK
 
     # Día hábil
     if current.time() < market_close:
+        # Mercado aún abierto -> retroceder al último día hábil anterior
         candidate = current - timedelta(days=1)
-        # Si el día anterior fue fin de semana, retrocede hasta viernes
         while candidate.weekday() >= 5:
             candidate -= timedelta(days=1)
+        if _HAS_CALENDAR:
+            try:
+                return mc.get_last_valid_trading_day(candidate)
+            except Exception:
+                pass
         return candidate.date()
     else:
-        # Ya pasó el cierre: el último cierre es el de hoy
+        # Mercado ya cerró -> hoy es válido
+        if _HAS_CALENDAR:
+            try:
+                return mc.get_last_valid_trading_day(current)
+            except Exception:
+                pass
+
         return current.date()
 
 def get_last_trading_close(now: datetime | None = None, market_close: time = MARKET_CLOSE, tz: ZoneInfo = MARKET_TZ) -> datetime:
