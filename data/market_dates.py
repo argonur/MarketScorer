@@ -47,9 +47,8 @@ def get_last_trading_date(now: datetime | None = None, market_close: time = MARK
     """
     current = market_now(now, tz)
 
-    # Si es fin de semana, retrocede al último día hábil anterior
+    # Si es fin de semana, retrocede hasta viernes
     if current.weekday() >= 5:
-        # Retrocede hasta viernes (weekday == 4)
         back = current
         while back.weekday() >= 5:
             back -= timedelta(days=1)
@@ -74,7 +73,6 @@ def get_last_trading_date(now: datetime | None = None, market_close: time = MARK
                 return mc.get_last_valid_trading_day(current)
             except Exception:
                 pass
-
         return current.date()
 
 def get_last_trading_close(now: datetime | None = None, market_close: time = MARKET_CLOSE, tz: ZoneInfo = MARKET_TZ) -> datetime:
