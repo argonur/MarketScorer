@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import yfinance as yf
 import os
 import pandas as pd
+import logging
 
 load_dotenv()
 URL = os.getenv("SHILLER_PE_URL")
@@ -13,6 +14,8 @@ PATH_DIR = os.getenv("SAVE_PATH", "data/inputs")
 MAX_VALUE = 120
 start_date, end_date = yfinance_window_for_last_close()
 SYMBOL = "^SPX"
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class ShillerPEIndicator(IndicatorModule):
     #Constructor
@@ -25,24 +28,27 @@ class ShillerPEIndicator(IndicatorModule):
         self.promedio_cape_30 = None
         self.desv_cape_30 = None
 
-    def fetch_data(self):
+    def fetch_data(self, date):
+            logger.info(f" -> Fecha a usar: {date}")
             # Descargar el archivo mas reciente
             filepath = download_latest_file(base_url=URL, file_name=NAME, save_dir=PATH_DIR)
             if not filepath:
                 raise RuntimeError("No se pudo descargar el archivo Shiller PE")
 
+            # print(f"[Shiller]: Fecha a usar: {date}")
+            # Proximamente los metodos 'process' deberán aceptar date para buscar por fecha
             self._process_data(filepath)
             self._process_data_30(filepath)
 
             # Obtener el ultimo cierre de S&P 500
-            last_close_spx = self.get_last_close(SYMBOL)
+            last_close_spx = self.get_last_close(SYMBOL, date)
             if last_close_spx is None or self.cape_average is None:
                 raise RuntimeError("Datos insuficientes para calcular CAPE diario")
 
             self.daily_cape = round(last_close_spx / self.cape_average, 2)
             return self.daily_cape
 
-    def normalize(self):
+    def normalize(self, date):
         if self.daily_cape is None or self.promedio_cape_30 is None or self.desv_cape_30 is None:
             raise RuntimeError("No se puede normalizar: faltan datos criticos")
 
@@ -53,10 +59,10 @@ class ShillerPEIndicator(IndicatorModule):
         score = max(0, min(100, 100 - max(0, z) * 25)) / 100
         return score
 
-    def get_score(self):
+    def get_score(self, date):
         if self.daily_cape is None or self.promedio_cape_30 is None or self.desv_cape_30 is None:
-            self.fetch_data()
-        value = self.normalize()
+            self.fetch_data(date)
+        value = self.normalize(date)
         return round(value, 2)
     
     def _process_data(self, file_path):
@@ -101,8 +107,9 @@ class ShillerPEIndicator(IndicatorModule):
         self.promedio_cape_30 = val_obtenidos.mean() if not val_obtenidos.empty else None
         self.desv_cape_30 = val_obtenidos.std() if not val_obtenidos.empty else None
 
-    def get_last_close(self, symbol):
+    def get_last_close(self, symbol, date):
         sp500 = yf.Ticker(symbol)
+        logging.info(f"[Shiller]: Fecha para last_close: {date}")
         data = sp500.history(start=start_date, end=end_date, auto_adjust=True)
         if data.empty:
             print("❌ No se pudieron obtener datos del índice S&P 500")
