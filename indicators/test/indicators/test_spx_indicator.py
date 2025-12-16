@@ -1,6 +1,7 @@
 import pytest
 import pandas as pd
 from unittest.mock import MagicMock
+from datetime import date
 from indicators.spxIndicator import SIMBOL, SPXIndicator
 
 # Simulamos una respuesta de yfinance
@@ -19,11 +20,12 @@ def mock_yf_client():
 def test_fetch_data_ok(mock_yf_client):
     client, ticker_instance = mock_yf_client
     # Simular datos históricos válidos
+    fecha = date(2025, 12, 15)
     data = pd.DataFrame({'Close': [100 + i for i in range(300)]})
     ticker_instance.history.return_value = data
 
     indicador = SPXIndicator(sma_period=5, upper_ratio= 0.2, lower_ratio=-0.2 , yf_client=client)
-    result = indicador.fetch_data()
+    result = indicador.fetch_data(fecha)
 
     assert isinstance(result, float)
     assert result == data['Close'].tail(5).mean()
@@ -32,10 +34,11 @@ def test_fetch_data_ok(mock_yf_client):
 
 def test_fetch_data_vacio(mock_yf_client, capsys):
     client, ticker_instance = mock_yf_client
+    fecha = date(2025, 12, 15)
     ticker_instance.history.return_value = pd.DataFrame()
     indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
 
-    indicador.fetch_data()
+    indicador.fetch_data(fecha)
     captured = capsys.readouterr()
     assert "No se obtuvieron" in captured.out
 
@@ -43,15 +46,17 @@ def test_fetch_data_vacio(mock_yf_client, capsys):
 
 def test_fetch_data_insuficiente_devuelve_none(mock_yf_client):
     client, ticker_instance = mock_yf_client
+    fecha = date(2025, 12, 15)
     data = pd.DataFrame({'Close': [100, 101]}) # Solo 2 dias
     ticker_instance.history.return_value = data
     indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
 
     with pytest.raises(ValueError, match="dias disponibles"):
-        indicador.fetch_data()
+        indicador.fetch_data(fecha)
 
 def test_fetch_data_columna_close_no_existe(mock_yf_client, capsys):
     client, ticker_instance = mock_yf_client
+    fecha = date(2025, 12, 15)
     
     # DataFrame sin columna 'Close'
     historical_data = pd.DataFrame({
@@ -64,7 +69,7 @@ def test_fetch_data_columna_close_no_existe(mock_yf_client, capsys):
     ticker_instance.history.return_value = historical_data
     indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
 
-    indicador.fetch_data()
+    indicador.fetch_data(fecha)
     captured = capsys.readouterr()
     assert "No se obtuvieron" in captured.out
 
@@ -74,33 +79,37 @@ def test_fetch_data_columna_close_no_existe(mock_yf_client, capsys):
 
 def test_obtener_ultimo_cierre_valido(mock_yf_client):
     client, ticker_instance = mock_yf_client
+    fecha = date(2025, 12, 15)
     data = pd.DataFrame({'Close': [200]})
     ticker_instance.history.return_value = data
 
     indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
-    assert indicador.get_last_close(SIMBOL) == 200
+    assert indicador.get_last_close(SIMBOL, fecha) == 200
 
 # Caso obtener_ultimo_cierre, vacio
 
 def test_obtener_ultimo_cierre_vacio(mock_yf_client):
+    fecha = date(2025, 12, 15)
     client, ticker_instance = mock_yf_client
     ticker_instance.history.return_value = pd.DataFrame()
     indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
 
-    assert indicador.get_last_close(SIMBOL) is None
+    assert indicador.get_last_close(SIMBOL, fecha) is None
 
 def test_obtener_ultimo_cierre_Nulo(mock_yf_client):
+    fecha = date(2025, 12, 15)
     client, ticker_instance = mock_yf_client
     # Hacer que se lance una excepción cuando se llame a history()
     ticker_instance.history.side_effect = Exception("Error:")
     indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
 
     with pytest.raises(Exception, match="Error:"):
-        indicador.get_last_close(SIMBOL)
+        indicador.get_last_close(SIMBOL, fecha)
 
 #### Metodo normalize ####
 
 def test_normalize_limte_inferior(mock_yf_client):
+    fecha = date(2025, 12, 15)
     client, ticker_instance = mock_yf_client
     ticker_instance.history.side_effect = [
         pd.DataFrame({'Close': [100]* 300}), # fetch_data simulado
@@ -108,9 +117,10 @@ def test_normalize_limte_inferior(mock_yf_client):
     ]
     indicador = SPXIndicator(sma_period=5, upper_ratio=.02, lower_ratio=-0.2, yf_client=client)
 
-    assert indicador.normalize() == 1.0
+    assert indicador.normalize(fecha) == 1.0
 
 def test_normalize_limite_superior(mock_yf_client):
+    fecha = date(2025, 12, 15)
     client, ticker_instance = mock_yf_client
     ticker_instance.history.side_effect = [
         pd.DataFrame({'Close': [100]* 300}),  # fetch_data
@@ -118,17 +128,19 @@ def test_normalize_limite_superior(mock_yf_client):
     ]
     indicador = SPXIndicator(sma_period=5, upper_ratio=.02, lower_ratio=-0.2, yf_client=client)
 
-    assert indicador.normalize() == 0.0
+    assert indicador.normalize(fecha) == 0.0
 
 def test_normalize_missing_sma(mock_yf_client, capsys):
+    fecha = date(2025, 12, 15)
     client, ticker_instance = mock_yf_client
     ticker_instance.history.return_value = pd.DataFrame()
 
     indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
     with pytest.raises(ValueError, match="No se pudo calcular"):
-        indicador.normalize()
+        indicador.normalize(fecha)
 
 def test_normalize_missing_last_close(mock_yf_client):
+    fecha = date(2025, 12, 15)
     client, ticker_instance = mock_yf_client
     ticker_instance.history.side_effect = [
         pd.DataFrame({'Close': [100]*300}),
@@ -137,11 +149,12 @@ def test_normalize_missing_last_close(mock_yf_client):
 
     indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
     with pytest.raises(ValueError):
-        indicador.normalize()
+        indicador.normalize(fecha)
 
 # test fallido pero valido
 
 def test_normalize_middle_value(mock_yf_client):
+    fecha = date(2025, 12, 15)
     client, ticker_instance = mock_yf_client
 
     # Simular histórico para SMA y luego último cierre
@@ -158,6 +171,6 @@ def test_normalize_middle_value(mock_yf_client):
         yf_client=client
     )
 
-    result = indicador.normalize()
+    result = indicador.normalize(fecha)
 
     assert 0.0 < result < 1.0
