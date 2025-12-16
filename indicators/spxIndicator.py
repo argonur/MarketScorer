@@ -3,6 +3,9 @@ from indicators.IndicatorModule import IndicatorModule
 from config.config_loader import get_config
 import yfinance as yf
 import data.market_dates as md
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 config = get_config()
 # Obtenemos el valor del periodo para SMA desde el modulo de configuracion
@@ -26,9 +29,10 @@ class SPXIndicator(IndicatorModule):
         self.yf_client = yf_client or yf
     
 ### Metodo independiente para obtener el ultimo cierre ###
-    def get_last_close(self, SIMBOL):
+    def get_last_close(self, SIMBOL, date):
         # Metodo para obtener el valor del ultimo cierre del indice S&P 500
         try:
+            logger.info(F" -> Fecha last_close: {date}")
             sp500 = self.yf_client.Ticker(SIMBOL)
             datos = sp500.history(start=start_date, end=end_date, auto_adjust=True)
 
@@ -36,15 +40,16 @@ class SPXIndicator(IndicatorModule):
                 print("No se obtuvieron datos para el S&P 500.")
                 return None
             ultimo_cierre = float(datos['Close'].iloc[0])
+            logger.info(f" -> Last Close: {ultimo_cierre}")
             return ultimo_cierre
         except Exception as e:
             print(f"Error al obtener el ultimo cierre: {e}")
             raise
     
-    def fetch_data(self):
+    def fetch_data(self, date):
         try:
+            logger.info(f" -> Fecha a usar: {date}") # loggers unicamente son para debug visual
             ticker = self.yf_client.Ticker(SIMBOL)
-
             # Descargar 300 dias bursatiles para asegurar los dias por defecto
             historical_data = ticker.history(period="300d")
 
@@ -72,12 +77,12 @@ class SPXIndicator(IndicatorModule):
             print(f"Hubo un error al obtener datos de la API: {e}")
             raise
     
-    def normalize(self):
+    def normalize(self, date):
         try:
-            sma = self.fetch_data()
+            sma = self.fetch_data(date)
             # Validamos antes de hacer las operaciones
             if sma:
-                ultimo_cierre = self.get_last_close(SIMBOL)
+                ultimo_cierre = self.get_last_close(SIMBOL, date)
             else:
                 raise ValueError("No se pudo calcular la SMA")
 
