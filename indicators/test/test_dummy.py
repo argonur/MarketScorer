@@ -1,6 +1,7 @@
 from indicators.dummy import Dummy
 from indicators.IndicatorModule import IndicatorModule
 import pytest
+from datetime import date
 
 class TestDummyImplementation:
     """Pruebas específicas para la implementación Dummy"""
@@ -13,13 +14,16 @@ class TestDummyImplementation:
         assert isinstance(dummy, IndicatorModule)
 
     def test_fetch_data_implementation(self, dummy):
-        assert dummy.fetch_data() is None
+        fecha = date(2025, 12, 15)
+        assert dummy.fetch_data(fecha) is None
 
     def test_fetch_data_idempotent(self, dummy):
-        assert dummy.fetch_data() == dummy.fetch_data()
+        fecha = date(2025, 12, 15)
+        assert dummy.fetch_data(fecha) == dummy.fetch_data(fecha)
     
     def test_normalize_implementation(self, dummy):
-        assert dummy.normalize() is None
+        fecha = date(2025, 12, 15)
+        assert dummy.normalize(fecha) is None
     
     def test_instance_creation(self, dummy):
         assert isinstance(dummy, IndicatorModule)
