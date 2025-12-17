@@ -8,9 +8,10 @@ import pytest
 def fake_spx():
     class FakeSPX:
         sma_period = 100
-        def fetch_data(self): return 1234.5678
-        def normalize(self): return 0.33
-        def get_last_close(self, SIMBOL): return 2345.6789
+        d = "2025-12-12"
+        def fetch_data(self, d): return 1234.5678
+        def normalize(self, d): return 0.33
+        def get_last_close(self, SIMBOL, d): return 2345.6789
     return FakeSPX()
 
 

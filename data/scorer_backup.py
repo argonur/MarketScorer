@@ -68,12 +68,12 @@ class ScorerBackup:
 
     def backup_fear_greed(self, cfg_id):
         try: 
-            raw = self.fg.fetch_data()
+            raw = self.fg.fetch_data(self.calc_date)
             params = [
                 self.calc_date,
                 round(self.to_native(raw.value)),
                 raw.description,
-                round(self.to_native(self.fg.normalize()), 2)
+                round(self.to_native(self.fg.normalize(self.calc_date)), 2)
             ]
             sql = """
             INSERT INTO fear_greed_backup
@@ -91,13 +91,13 @@ class ScorerBackup:
 
     def backup_spx(self, cfg_id):
         try: 
-            raw = self.sp.fetch_data()
+            raw = self.sp.fetch_data(self.calc_date)
             params = [
                 self.calc_date,
                 self.sp.sma_period,
-                round(self.to_native(self.sp.get_last_close(SIMBOL)), 2),
+                round(self.to_native(self.sp.get_last_close(SIMBOL, self.calc_date)), 2),
                 round(self.to_native(raw), 2),
-                round(self.to_native(self.sp.normalize()), 2)
+                round(self.to_native(self.sp.normalize(self.calc_date)), 2)
             ]
             sql = """
             INSERT INTO spx_backup
@@ -114,11 +114,11 @@ class ScorerBackup:
 
     def backup_vix(self, cfg_id):
         try:
-            raw = self.vx.fetch_data()
+            raw = self.vx.fetch_data(self.calc_date)
             params = [
                 self.calc_date,
                 round(self.to_native(raw), 2),
-                round(self.to_native(self.vx.normalize()), 2)
+                round(self.to_native(self.vx.normalize(self.calc_date)), 2)
             ]
             sql = """
             INSERT INTO vix_backup
@@ -135,9 +135,9 @@ class ScorerBackup:
 
     def backup_shiller(self, cfg_id):
         try:
-            raw = self.pe.fetch_data()          # Valor del daily_cape
+            raw = self.pe.fetch_data(self.calc_date)          # Valor del daily_cape
             promedio = self.pe.cape_average
-            normalizado = self.pe.get_score()
+            normalizado = self.pe.get_score(self.calc_date)
             params = [
                 self.calc_date,
                 round(self.to_native(promedio), 2),
@@ -160,7 +160,7 @@ class ScorerBackup:
 
     def backup_score(self, cfg_id):
         try:
-            score = ScoreCalculator.get_global_score()
+            score = ScoreCalculator.get_global_score(self.calc_date)
             sql = """
             INSERT INTO score_backup
                 (calc_date, score)
@@ -203,4 +203,4 @@ if __name__ == "__main__":
     try:
         print("✅ Respaldo completado:", ScorerBackup().run())
     except Exception as e:
-        logger.error("Ocurrio un error al tratar de respaldar la información: ", e)
+        logger.error(f"Ocurrio un error al tratar de respaldar la información: {e} ")

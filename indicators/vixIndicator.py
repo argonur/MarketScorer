@@ -1,8 +1,11 @@
-from datetime import datetime
+from datetime import datetime, date
 from indicators.IndicatorModule import IndicatorModule
 from config.config_loader import get_config
 import data.market_dates as md
 import yfinance as yf
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 config = get_config() # Instanciamos la configuración global para poder acceder a ella
 vix_weight = config.get('weights',{}).get('vix',{})
@@ -19,7 +22,7 @@ class VixIndicator(IndicatorModule):
         # cliente mockeable
         self.yf_client = yf_client or yf
 
-    def get_last_close(self, start_date, end_date) -> float | None:
+    def get_last_close(self, start_date, end_date, date) -> float | None:
         try:
             vix = self.yf_client.Ticker(SIMBOL)
             datos = vix.history(start=start_date, end=end_date, auto_adjust=True)
@@ -30,10 +33,11 @@ class VixIndicator(IndicatorModule):
             print(f"Error al obtener el ultimo cierre: {e}")
             return None
 
-    def fetch_data(self) -> float | None:
+    def fetch_data(self, date) -> float | None:
         try:
+            logger.info(f" -> Fecha a usar: {date}")
             start_date, end_date = md.yfinance_window_for_last_close()
-            last_close = self.get_last_close(start_date, end_date)
+            last_close = self.get_last_close(start_date, end_date, date)
             if last_close is None:
                 raise ValueError("No se obtuvieron datos de cierre.")
             
@@ -42,9 +46,9 @@ class VixIndicator(IndicatorModule):
             print(f"░ Fetch: {e}, ó no hay conexion a internet")
             return None
     
-    def normalize(self):
+    def normalize(self, date):
         try:
-            vix_actual = self.fetch_data()
+            vix_actual = self.fetch_data(date)
 
             if vix_actual is None:
                 raise ValueError("No se obtuvieron datos para normalizar")

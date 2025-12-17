@@ -1,6 +1,7 @@
 import pytest
 from abc import ABC, abstractclassmethod
 from indicators.IndicatorModule import IndicatorModule
+from datetime import date
 
 # Pruebas que aplican a TODAS las clases que implementan la interfaz
 class TestIndicatorModuleInterface:
@@ -21,8 +22,9 @@ class TestIndicatorModuleInterface:
         assert hasattr(implementation, 'get_score')
         assert callable(implementation.get_score)
     def test_get_score_returns_normalized_value(self, implementation):
-        score = implementation.get_score()
-        assert score == implementation.normalize()
+        fecha = date(2025, 12, 15)
+        score = implementation.get_score(fecha)
+        assert score == implementation.normalize(fecha)
 
     # La interfaz no permite ser instanciada directamente
     def test_interface_cannot_be_instantiated(self):
