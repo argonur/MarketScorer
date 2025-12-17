@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import date
 class IndicatorModule(ABC):
     """
     Clase abstracta para todos los indicadores.
@@ -6,24 +7,24 @@ class IndicatorModule(ABC):
     """
 
     @abstractmethod
-    def fetch_data(self):
+    def fetch_data(self, date: date):
         """ Obtiene los datos necesarios para el indicador. """
     pass
 
     @abstractmethod
-    def normalize(self):
+    def normalize(self, date: date):
         """ 
         - Procesa los datos obtenidos y los transforma en valores entre 0 y 1.
         - Este valor representa la contribución del indicador al sistema.
         """
     pass
 
-    def get_score(self):
+    def get_score(self, date: date):
         """ 
         - Retorna el valor normalizado.
         - Este metodo puede ser sobreescrito si el indicador necesita ajustar el resultado.
         """
-        return self.normalize()
+        return self.normalize(date)
 
     def get_last_close(self):
         """
