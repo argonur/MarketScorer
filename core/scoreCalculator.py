@@ -1,28 +1,43 @@
-from typing import Callable, List, Dict
+from datetime import date
+from typing import Callable, List, Dict, Optional
 from indicators import shillerPEIndicator
 from indicators.IndicatorModule import IndicatorModule
 from indicators.FearGreedIndicator import FearGreedIndicator
 from indicators.spxIndicator import SPXIndicator
 from indicators.vixIndicator import VixIndicator
 from indicators.shillerPEIndicator import ShillerPEIndicator
+from data.market_dates import get_last_trading_date
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 from config.config_loader import get_config
 
 config = get_config() # Obtener la configuración
 
 class ScoreCalculator:
-    def __init__(self, indicators: List[IndicatorModule], weights: Dict[str, float], scorer_fn: Callable[[IndicatorModule], float] = None):
+    def __init__(self, indicators: List[IndicatorModule], weights: Dict[str, float], scorer_fn: Callable[[IndicatorModule, date], float] = None ):
         """
         Parámetros:
         - indicators: Lista de instancias de indicadores que heredan de IndicatorModule
         - weights: Diccionario con los nombres de los indicadores y su peso
-        - scorer_fn: Funcion opcional para obtener el score de un indicador (utilidad para mocking)
+        - scorer_fn: Funcion opcional para obtener el score de un indicador con una fecha (utilidad para mocking)
         """
         self.indicators = indicators
         self.weights = weights
-        self.scorer_fn = scorer_fn if scorer_fn else lambda indicator: indicator.get_score()
+        self.scorer_fn = scorer_fn if scorer_fn else lambda indicator, d: indicator.get_score(d)
         self._last_score = None # Guardar el ultimo calculo
 
-    def calculate_score(self):
+    def calculate_score(self, date: Optional[date] = None):
+        if date is None:
+            logger.warning(f"[SC]Fecha no establecida.")
+            logger.info(f"[SC]Buscando ultimo cierre habil....")
+            # print(f"[SC]: Fecha no establecida.\nBuscando el ultimo cierre habil....")
+            date = get_last_trading_date()
+        else:
+            logger.info(f"Buscando datos para: {date}")
+            # print(f"Buscando datos para: {date}")
+
         score_final = 0.0
         total_weight = 0.0
 
@@ -42,7 +57,7 @@ class ScoreCalculator:
             
             total_weight += weight
 
-            score = self.scorer_fn(indicator)
+            score = self.scorer_fn(indicator, date)
 
             if score is None:
                 raise ValueError(f"El indicador '{name}' retornó un score Nulo")
@@ -85,13 +100,16 @@ class ScoreCalculator:
         return cls(indicators=indicators, weights=pesos)
 
     @staticmethod
-    def get_global_score(rounded: bool = False) -> float:
+    def get_global_score(rounded: bool = False, date: Optional[date] = None) -> float:
         """
         Calcula el score usando la configuración global.
         Si rounded=True, devuelve el valor redondeado al entero más cercano.
+        Si date es None, se usa el último cierre hábil.
         """
         calculator = ScoreCalculator.from_global_config()
-        raw_score = calculator.calculate_score()
+        logger.info(f"----------------------------------")
+        #date = "2025-12-11"
+        raw_score = calculator.calculate_score(date)
         return round(raw_score) if rounded else raw_score
 
 
