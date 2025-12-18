@@ -1,4 +1,3 @@
-from multiprocessing import Value
 import pytest
 from unittest.mock import MagicMock
 from unittest import mock
@@ -15,6 +14,8 @@ def valid_weights():
         "ShillerPEIndicator": valid_weight('shiller')
     }
 
+DATE_BACKTESTING = "2025-12-17"
+
 # Casos validos
 def test_score_calculator_valid():
     mock_indicator = MagicMock()
@@ -25,7 +26,7 @@ def test_score_calculator_valid():
     weights = {"MagicMock": 1.0}
 
     calculator = ScoreCalculator(indicators, weights)
-    assert calculator.calculate_score() == 80.0
+    assert calculator.calculate_score(DATE_BACKTESTING) == 80.0
 
 # Caso, Manejo de error por pesos faltantes -> sin indicadores
 def test_missing_weight_error():
@@ -35,7 +36,7 @@ def test_missing_weight_error():
     weights = {} # Sin pesos
 
     with pytest.raises(ValueError, match="Falta peso para indicador"):
-        ScoreCalculator(indicators, weights).calculate_score()
+        ScoreCalculator(indicators, weights).calculate_score(DATE_BACKTESTING)
 
 # Caso, Manejo de error por pesos faltantes
 def test_missing_indicator_weight_error():
@@ -47,7 +48,7 @@ def test_missing_indicator_weight_error():
     weights = {"FearGreedIndicator": 1.0}
 
     with pytest.raises(ValueError, match="Falta peso para indicador"):
-        ScoreCalculator(indicators, weights).calculate_score()
+        ScoreCalculator(indicators, weights).calculate_score(DATE_BACKTESTING)
 
 # Caso, Manejo error por peso = 0.0
 def test_zero_weight_error():
@@ -57,7 +58,7 @@ def test_zero_weight_error():
     weights = {"MagicMock": 0.0}
 
     with pytest.raises(ValueError, match="debe ser mayor que cero"):
-        ScoreCalculator(indicators, weights).calculate_score()
+        ScoreCalculator(indicators, weights).calculate_score(DATE_BACKTESTING)
 
 # Caso, la suma de los pesos debe ser 1.0
 def test_all_weights_be_one():
@@ -67,7 +68,7 @@ def test_all_weights_be_one():
     weights = {"MagicMock": 0.5}
 
     with pytest.raises(ValueError, match="los pesos no es 1.0"):
-        ScoreCalculator(indicators, weights).calculate_score()
+        ScoreCalculator(indicators, weights).calculate_score(DATE_BACKTESTING)
 
 # Caso, Manejo de score nulo
 def test_nule_score_error():
@@ -77,7 +78,7 @@ def test_nule_score_error():
     weights = {"MagicMock": 1.0}
 
     with pytest.raises(ValueError, match="retornó un score Nulo"):
-        ScoreCalculator(indicators, weights).calculate_score()
+        ScoreCalculator(indicators, weights).calculate_score(DATE_BACKTESTING)
 
 # Caso, score fuera de rango
 def test_score_out_of_range_raises_error():
@@ -87,7 +88,7 @@ def test_score_out_of_range_raises_error():
     weights = {"MagicMock": 1.0}
 
     with pytest.raises(ValueError, match="Score fuera de rango"):
-        ScoreCalculator(indicators, weights).calculate_score()
+        ScoreCalculator(indicators, weights).calculate_score(DATE_BACKTESTING)
 
 ###### Errores con la Configuracion Global
 def test_weights_by_global_configuration():
@@ -97,7 +98,7 @@ def test_weights_by_global_configuration():
     weights = {"MagicMock": 404} # 404 es el codigo de error que se obtiene si se solicita un peso que no existe
 
     with pytest.raises(ValueError, match="Hubo un problema al"):
-        ScoreCalculator(indicators, weights).calculate_score()
+        ScoreCalculator(indicators, weights).calculate_score(DATE_BACKTESTING)
 
 # Caso, valida que los pesos de los indicadores sean validos
 def test_valid_weights():
@@ -131,7 +132,7 @@ def test_valid_weights():
         }
 
     calculator = ScoreCalculator(indicators, weights)
-    assert calculator.calculate_score().__round__() == 22
+    assert calculator.calculate_score(DATE_BACKTESTING).__round__() == 22
 
 def test_wrong_weights():
     mock_indicator = MagicMock()
@@ -141,7 +142,7 @@ def test_wrong_weights():
     weights = {"MagicMock": valid_weights_config }
 
     with pytest.raises(ValueError, match="Hubo un problema al"):
-        ScoreCalculator(indicators, weights).calculate_score()
+        ScoreCalculator(indicators, weights).calculate_score(DATE_BACKTESTING)
 
 def test_get_global_score_sin_redondear(monkeypatch):
     # Mock de from_global_config para devolver un ScoreCalculator falso
