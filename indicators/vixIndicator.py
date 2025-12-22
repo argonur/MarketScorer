@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 config = get_config() # Instanciamos la configuración global para poder acceder a ella
 vix_weight = config.get('weights',{}).get('vix',{})
 SIMBOL = "^VIX"
+#SAMPLE_DATE = "2025-12-20"
 
 class VixIndicator(IndicatorModule):
     # Constructor
@@ -25,7 +26,7 @@ class VixIndicator(IndicatorModule):
     def get_last_close(self, start_date, end_date, date) -> float | None:
         try:
             vix = self.yf_client.Ticker(SIMBOL)
-            datos = vix.history(start=start_date, end=end_date, auto_adjust=True)
+            datos = vix.history(start=date, end=end_date, auto_adjust=True)
             if datos.empty:
                 raise ValueError("Fallo al obtener datos de VIX.")
             return float(datos['Close'].iloc[0])
@@ -39,8 +40,9 @@ class VixIndicator(IndicatorModule):
             start_date, end_date = md.yfinance_window_for_last_close()
             last_close = self.get_last_close(start_date, end_date, date)
             if last_close is None:
-                raise ValueError("No se obtuvieron datos de cierre.")
+                raise ValueError("No se obtuvieron datos de cierre")
             
+            logger.info(f"[Vix] -> Ultimo cierre: {last_close}") # Logs temporales
             return last_close
         except Exception as e:
             print(f"░ Fetch: {e}, ó no hay conexion a internet")
