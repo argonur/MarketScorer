@@ -2,7 +2,7 @@ import json
 import logging
 from psycopg2 import DatabaseError
 from db.db_connection import Database
-from data.market_dates import market_now
+from data.market_dates import get_last_trading_date
 from config.config_loader import get_config
 from indicators.FearGreedIndicator import FearGreedIndicator
 from indicators.spxIndicator import SPXIndicator, SIMBOL
@@ -19,7 +19,7 @@ logging.basicConfig(
 class ScorerBackup:
     def __init__(self, db=None):
         self.db = db or Database()
-        self.calc_date = market_now().date()
+        self.calc_date = get_last_trading_date()
         self.config    = get_config()
         # instancias de indicadores
         self.fg = FearGreedIndicator()

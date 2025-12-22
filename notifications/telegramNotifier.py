@@ -5,6 +5,7 @@ from datetime import timezone, timedelta
 import data.market_dates as md
 from utils.db_user_config import get_user_config
 from core.scoreCalculator import ScoreCalculator, valid_weight
+from data.market_dates import get_last_trading_close
 from indicators.spxIndicator import SPXIndicator
 from indicators.FearGreedIndicator import FearGreedIndicator
 from indicators.vixIndicator import VixIndicator
@@ -12,6 +13,7 @@ from indicators.shillerPEIndicator import ShillerPEIndicator
 
 logger = logging.getLogger(__name__)
 LOCAL_TZ = timezone(timedelta(hours=-6))
+SIMBOL = '^SPX'
 
 def valoracion_feargreed(fg_valor):
     if not fg_valor:
@@ -78,9 +80,10 @@ def generar_reporte_mercado(
         "ShillerPEIndicator": valid_weight("shiller")
     }
     calculator = score_cls(indicators=[spx, fg, vix, shiller], weights=pesos)
-    score_final = round(calculator.calculate_score())
+    date_to_calculate = get_last_trading_close().date()
+    score_final = round(calculator.get_global_score(date_to_calculate))
 
-    fg_val = fg.fetch_data()
+    fg_val = fg.fetch_data(date_to_calculate)
     value_fg = valoracion_feargreed(fg_val) or "N/A"
     hora_local = md.market_now().astimezone(LOCAL_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -88,10 +91,23 @@ def generar_reporte_mercado(
         f"<b>📊 Reporte Mercado</b>\n"
         f"🕟 Date: {hora_local}\n"
         f"📰 CNN Fear & Greed: <b>{value_fg}</b>\n"
-        f"📈 SMA-200 S&P 500: <b>{spx.normalize():.2f}</b>\n"
-        f"🏛️ Calculo SMA-200 S&P500: <b>{spx.fetch_data():.2f}</b>\n"
-        f"📰 Valor normalizado de Vix: <b>{vix.normalize():.2f}</b>\n"
-        f"📰 Valor normalizado de Shiller PE: <b>{shiller.get_score():.2f}</b>\n"
-        f"💰 Último Cierre S&P 500: <b>{spx.get_last_close(SIMBOL='^SPX'):.2f}</b>\n"
+        f"📈 SMA-200 S&P 500: <b>{spx.normalize(date_to_calculate):.2f}</b>\n"
+        f"🏛️ Calculo SMA-200 S&P500: <b>{spx.fetch_data(date_to_calculate):.2f}</b>\n"
+        f"📰 Valor normalizado de Vix: <b>{vix.normalize(date_to_calculate):.2f}</b>\n"
+        f"📰 Valor normalizado de Shiller PE: <b>{shiller.get_score(date_to_calculate):.2f}</b>\n"
+        f"💰 Último Cierre S&P 500: <b>{spx.get_last_close(SIMBOL, date_to_calculate):.2f}</b>\n"
         f"🧾 Score Final: <b>{score_final}%</b>\n"
     )
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
+    try:
+        logger.info("Iniciando generación de reporte de mercado...")
+        reporte = generar_reporte_mercado()
+        notifier = TelegramNotifier()
+        notifier.enviar_mensaje(reporte)
+        logger.info("Workflow completado correctamente.")
+    except Exception as e:
+        logger.exception("Error fatal en el workflow")
+        raise

@@ -13,28 +13,18 @@ jobs:
     container:
       image: dyeosvaldoperalta/marketscorer:1.5.2
       env: 
+        CHAT_ID: ${{ secrets.CHAT_ID }}
+        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
         SAVE_PATH: data/temp   # 👈 aquí defines la ruta
 
     steps:
       - name: ⬇️ Clonar código del repositorio
         uses: actions/checkout@v4
 
-      - name: ⬇️ Descargar archivo Shiller PE usando file_downloader.py
-        run: |
-          # Ejecuta el indicador para que descargue el archivo
-          python -c "from indicators.shillerPEIndicator import ShillerPEIndicator; indicator = ShillerPEIndicator(); indicator.fetch_data()"
-          # Verifica que el archivo se haya creado
-          SAVE_PATH="${SAVE_PATH:-data/temp}"
-          if [ ! -f "$SAVE_PATH/latest.xls" ]; then
-            echo "❌ El archivo Shiller PE no fue descargado correctamente por file_downloader.py"
-            exit 1
-          fi
-          echo "✅ Archivo Shiller PE descargado correctamente."
-
       - name: 🧪 Ejecutar pruebas
         run: |
           python tests/run_tests.py
-          python -m indicators.spxIndicator
           python -m core.scoreCalculator
           python -m notifications.telegramNotifier
           python -m data.scorer_backup

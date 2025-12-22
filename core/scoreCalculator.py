@@ -1,12 +1,12 @@
 from datetime import date
 from typing import Callable, List, Dict, Optional
-from indicators import shillerPEIndicator
 from indicators.IndicatorModule import IndicatorModule
 from indicators.FearGreedIndicator import FearGreedIndicator
 from indicators.spxIndicator import SPXIndicator
 from indicators.vixIndicator import VixIndicator
 from indicators.shillerPEIndicator import ShillerPEIndicator
-from data.market_dates import get_last_trading_date
+from data.market_dates import get_last_trading_close
+from utils.validatedDates import get_a_validated_date
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,11 +32,12 @@ class ScoreCalculator:
         if date is None:
             logger.warning(f"[SC]Fecha no establecida.")
             logger.info(f"[SC]Buscando ultimo cierre habil....")
-            # print(f"[SC]: Fecha no establecida.\nBuscando el ultimo cierre habil....")
-            date = get_last_trading_date()
+            date = get_last_trading_close().date()
         else:
             logger.info(f"Buscando datos para: {date}")
-            # print(f"Buscando datos para: {date}")
+        logger.info(f" -> Fecha a calcular {date}")
+        if not get_a_validated_date(str(date)):
+            raise ValueError(f"Invalid Date")
 
         score_final = 0.0
         total_weight = 0.0
@@ -107,8 +108,7 @@ class ScoreCalculator:
         Si date es None, se usa el último cierre hábil.
         """
         calculator = ScoreCalculator.from_global_config()
-        logger.info(f"----------------------------------")
-        #date = "2025-12-11"
+        #date = "2025-12-22"
         raw_score = calculator.calculate_score(date)
         return round(raw_score) if rounded else raw_score
 
