@@ -24,7 +24,7 @@ def validate_date_not_future(_date: str) -> bool:
     try:
         today = md.get_market_today()
         fecha = datetime.strptime(_date, format).date()
-        if fecha <= today:
+        if fecha < today:
             return True  # es válida, no futura
         else:
             raise ValueError(f"La fecha {_date} es futura o aún no cierra el mercado")
@@ -66,7 +66,7 @@ def get_a_validated_date(_date: str) -> bool:
         return True
     except Exception as e:
         logger.warning(f"Ocurrió un error crítico en la fecha solicitada -> {e}")
-        return False
+        return exit(1) # Rompe la ejecución del sistema
 
 if __name__ == "__main__":
     try:
