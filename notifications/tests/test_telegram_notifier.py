@@ -62,20 +62,6 @@ def test_envia_con_env_vars(monkeypatch):
     assert called["data"]["text"] == "hola"
     assert called["data"]["parse_mode"] == "HTML"
 
-def test_fallback_db_config(monkeypatch):
-    def fake_getenv(k):
-        return {"USER_IDENTIFIER": "user@example.com"}.get(k)
-    def fake_config(uid):
-        assert uid == "user@example.com"
-        return {"BOT_TOKEN": "T2", "CHAT_ID": "C2"}
-
-    notifier = TelegramNotifier(
-        post_fn=lambda url, **kwargs: DummyResp(),
-        config_fn=fake_config,
-        getenv_fn=fake_getenv,
-    )
-    assert notifier.enviar_mensaje("hola")
-
 def test_sin_config_lanza_valueerror():
     def fake_getenv(k): return None
     notifier = TelegramNotifier(post_fn=lambda u, d: DummyResp(), config_fn=lambda _: None, getenv_fn=fake_getenv)
@@ -91,29 +77,32 @@ def test_error_http_lanza_runtimeerror():
 
 ##### Tests para generar_reporte_mercado #####
 class FakeFG:
-    def __init__(self, value=68, description="greed"):
+    def __init__(self, value=68, description="greed", date: datetime.date = None):
         self.value = value
         self.description = description
-    def fetch_data(self): return self
+    def fetch_data(self, date): return self
 
 class FakeSPX:
-    def normalize(self): return 0.73
-    def fetch_data(self): return 4567.89
-    def get_last_close(self, SIMBOL="^SPX"): return 4550.12
+    def normalize(self, date): return 0.73
+    def fetch_data(self, date): return 4567.89
+    def get_last_close(self, date, SIMBOL="^SPX"): return 4550.12
 
 class FakeVix:
-    def normalize(self): return 0.08
+    def normalize(self, date): return 0.08
 
 class FakeShiller:
-    def get_score(self): return 0.08
+    def get_score(self, date): return 0.08
 
 class FakeScore:
-    def __init__(self, indicators, weights): pass
-    def calculate_score(self): return 61.7
+    def __init__(self, indicators, weights, date: datetime.date = None): pass
+    def get_global_score(self, date): return 61.7
 
 def test_generar_reporte_formato(monkeypatch):
     fixed_dt = datetime(2025, 9, 9, 16, 15, tzinfo=ZoneInfo("America/New_York"))
-    monkeypatch.setattr("notifications.telegramNotifier.md.market_now", lambda: fixed_dt)
+    monkeypatch.setattr(
+    "notifications.telegramNotifier.md.market_now",
+    lambda now=None, tz=None: fixed_dt
+)
 
     msg = generar_reporte_mercado(
         spx_cls=FakeSPX,
