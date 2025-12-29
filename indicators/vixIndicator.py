@@ -1,7 +1,7 @@
-from datetime import datetime, date
 from indicators.IndicatorModule import IndicatorModule
 from config.config_loader import get_config
 import data.market_dates as md
+from utils.MarketReport import MarketReport
 import yfinance as yf
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +22,14 @@ class VixIndicator(IndicatorModule):
         self.vix_max = vix_max if vix_max is not None else vix_config.get('max',{})
         # cliente mockeable
         self.yf_client = yf_client or yf
+        # para construir el diccionario de reportes
+        self._last_calculated_date = None
+        self._last_close = None
+        self._normalized = None
+
+    def _is_cached(self, date):
+        # Verifica si los datos ya estan calculados para esta fecha.
+        return self._last_calculated_date == date and self._last_close is not None
 
     def get_last_close(self, start_date, end_date, date) -> float | None:
         try:
@@ -36,6 +44,9 @@ class VixIndicator(IndicatorModule):
 
     def fetch_data(self, date) -> float | None:
         try:
+            if self._is_cached(date):
+                logger.info(f"[Vix]: Datos ya calculados para {date}..... Usando caché")
+                return self._last_close
             logger.info(f" -> Fecha a usar: {date}")
             start_date, end_date = md.yfinance_window_for_last_close()
             last_close = self.get_last_close(start_date, end_date, date)
@@ -43,6 +54,9 @@ class VixIndicator(IndicatorModule):
                 raise ValueError("No se obtuvieron datos de cierre")
             
             logger.info(f"[Vix] -> Ultimo cierre: {last_close}") # Logs temporales
+            self._last_close = last_close
+            self._last_calculated_date = date
+            self.set_report(date)
             return last_close
         except Exception as e:
             print(f"░ Fetch: {e}, ó no hay conexion a internet")
@@ -50,7 +64,11 @@ class VixIndicator(IndicatorModule):
     
     def normalize(self, date):
         try:
-            vix_actual = self.fetch_data(date)
+            if self._is_cached(date):
+                logger.warning(f"[Vix | Normalize]: Recalculando.....")
+                vix_actual = self._last_close
+            else:
+                vix_actual = self.fetch_data(date)
 
             if vix_actual is None:
                 raise ValueError("No se obtuvieron datos para normalizar")
@@ -65,10 +83,21 @@ class VixIndicator(IndicatorModule):
 
             # Aplicamos la formula para obtener el score final
             score = (vix_actual - self.vix_min) / (self.vix_max - self.vix_min)
+            self._normalized = round(score, 2)
+            logger.info(f"Desde Normalize: {self._normalized}")
             return round(score, 2)
         except Exception as e:
             print(f"░ Normalize: {e}")
             return None
+        
+    def set_report(self, date):
+        report = MarketReport()
+        report.set_indicator_data("VixIndicator",
+                {
+                    "last_close": round(self._last_close, 2),
+                    "normalized_value": (round(self.normalize(date), 2))
+                }, str(date)
+                )
 
 if __name__ == "__main__":
     try:
