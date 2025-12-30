@@ -1,4 +1,3 @@
-from queue import Empty
 from indicators.IndicatorModule import IndicatorModule
 from config.config_loader import get_config
 import yfinance as yf
