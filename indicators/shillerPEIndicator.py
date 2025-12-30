@@ -64,10 +64,6 @@ class ShillerPEIndicator(IndicatorModule):
             return self.daily_cape
 
     def normalize(self, date):
-        if not self._is_cached(date):
-            logger.warning(f"[ShillerPE | Normalize]: Recalculando....")
-            # Si no esta en caché, se refuerza el cálculo completo
-            self.fetch_data(date)
         if self.daily_cape is None or self.promedio_cape_30 is None or self.desv_cape_30 is None:
             raise RuntimeError("No se puede normalizar: faltan datos criticos")
 
@@ -79,9 +75,15 @@ class ShillerPEIndicator(IndicatorModule):
         return score
 
     def get_score(self, date):
-        # Refactorizar
-        logger.info(f"Refactorización de Shiller -> {round(self.normalize(date), 2)}")
-        return round(self.normalize(date), 2)
+        # Primero, asegurarnos de que los datos estén calculados.
+        if not self._is_cached(date):
+            logger.info(f"[ShillerPE | GetScore]: Calculando datos para {date}...")
+            self.fetch_data(date)
+
+        # Ahora, normalizar los datos ya calculados.
+        normalized_score = self.normalize(date)
+        logger.info(f"Refactorización de Shiller -> {round(normalized_score, 2)}")
+        return round(normalized_score, 2)
     
     def _process_data(self, file_path):
         try:
