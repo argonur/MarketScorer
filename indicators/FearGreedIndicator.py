@@ -41,12 +41,20 @@ class FearGreedIndicator(IndicatorModule):
     
     def normalize(self, date):
         try:
+            # Asumimos que los datos ya están calculados por fetch_data()
             if not self._is_cached(date):
                 logger.warning(f"[FG | Normalize]: Recalculando.....")
-            data = self.fetch_data(date)
-            if data and data.value is not None:
-                fg_normalize = (100 - data.value.__round__()) / 100 # Para obtener un numero entre 0 y 1 en decimal
-                return fg_normalize
+                self.fetch_data(date)  # ✅ Llamamos a fetch_data() una sola vez
+
+            # Validamos los datos
+            if self.fgi_value is None or self.fgi_value.value is None:
+                raise ValueError("No se pudieron obtener datos para normalizar")
+
+            # Normalizamos
+            fg_normalize = (100 - self.fgi_value.value.__round__()) / 100
+            self.fg_normalized = fg_normalize
+            return fg_normalize
+
         except Exception as e:
             logger.warning(f"Datos insuficientes: {e}")
             return None
@@ -57,7 +65,7 @@ class FearGreedIndicator(IndicatorModule):
                 {
                     "raw_value": round(self.fgi_value.value),
                     "raw_description": self.fgi_value.description,
-                    "normalized_value": self.normalize(date),
+                    "normalized_value": self.fg_normalized,
                 }, str(date)
                 )
 
