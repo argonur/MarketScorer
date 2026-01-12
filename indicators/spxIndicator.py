@@ -2,6 +2,7 @@ from indicators.IndicatorModule import IndicatorModule
 from config.config_loader import get_config
 import yfinance as yf
 import data.market_dates as md
+from datetime import datetime, timedelta
 from utils.MarketReport import MarketReport
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -42,29 +43,45 @@ class SPXIndicator(IndicatorModule):
         try:
             logger.info(F" -> Fecha last_close: {date}")
             sp500 = self.yf_client.Ticker(SIMBOL)
-            datos = sp500.history(start=start_date, end=end_date, auto_adjust=True)
+            datos = sp500.history(start=date, end=end_date, auto_adjust=True)
 
             if datos.empty:
                 print("No se obtuvieron datos para el S&P 500.")
                 return None
             ultimo_cierre = float(datos['Close'].iloc[0])
-            logger.info(f" -> Last Close: {ultimo_cierre}")
+            logger.info(f" -> Last Close: {ultimo_cierre} en {date}")
             self.last_close = ultimo_cierre
             return ultimo_cierre
         except Exception as e:
             print(f"Error al obtener el ultimo cierre: {e}")
             raise
-    
+
+    def get_backtesting_date_range_sma(self, date):
+        """
+        Calcula el rango de fechas para un SMA-200 a partir de una fecha recibida.
+        dias: Número de días hábiles que se requieren cubrir (ej. 200).
+        buffer: Días adicionales para cubrir festivos y fines de semana.
+        """
+        # Convertir a objeto date si viene como string
+        if isinstance(date, str):
+            date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+        else:
+            date_obj = date
+        
+        fecha_inicio = date_obj - timedelta(days=200 + 100)
+        fecha_fin = date_obj
+        return fecha_inicio, fecha_fin
+
     def fetch_data(self, date):
         try:
             if self._is_cached(date):
                 logger.info(f"Datos ya calculados para SMA-{periodo_sma}.... Usando caché")
                 return self.sma_value
             logger.info(f" -> Fecha a usar: {date}") # loggers unicamente son para debug visual
+            f_inicio, f_fin = self.get_backtesting_date_range_sma(date)
             ticker = self.yf_client.Ticker(SIMBOL)
             # Descargar 300 dias bursatiles para asegurar los dias por defecto
-            historical_data = ticker.history(period="300d")
-
+            historical_data = ticker.history(start=f_inicio, end=f_fin)
             if historical_data.empty:
                 print("No se obtuvieron datos historicos")
                 return None
@@ -84,6 +101,7 @@ class SPXIndicator(IndicatorModule):
                 
             sma = cierres.tail(self.sma_period).mean()
             self.sma_value = sma
+            self.last_close = self.get_last_close(SIMBOL, date)
             self._last_calculated_date = date
             self.set_report(date)
             return sma
@@ -100,7 +118,7 @@ class SPXIndicator(IndicatorModule):
             sma = self.fetch_data(date)
             # Validamos antes de hacer las operaciones
             if sma:
-                ultimo_cierre = self.get_last_close(SIMBOL, date)
+                ultimo_cierre = self.last_close
             else:
                 raise ValueError("No se pudo calcular la SMA")
 
