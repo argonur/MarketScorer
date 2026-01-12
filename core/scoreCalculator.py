@@ -7,6 +7,7 @@ from indicators.vixIndicator import VixIndicator
 from indicators.shillerPEIndicator import ShillerPEIndicator
 from data.market_dates import get_last_trading_close
 from utils.validatedDates import get_a_validated_date
+from utils.MarketReport import MarketReport
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,14 +28,21 @@ class ScoreCalculator:
         self.weights = weights
         self.scorer_fn = scorer_fn if scorer_fn else lambda indicator, d: indicator.get_score(d)
         self._last_score = None # Guardar el ultimo calculo
+        self._last_calculated_date = None
+
+    def _is_cached(self, date):
+        return self._last_calculated_date == date and self._last_score is not None
 
     def calculate_score(self, date: Optional[date] = None):
+        if self._is_cached(date):
+            logger.info(f"Datos ya calculados para {date}.... Usando caché")
+            return self._last_score
         if date is None:
             logger.warning(f"[SC]Fecha no establecida.")
-            logger.info(f"[SC]Buscando ultimo cierre habil....")
+            logger.info(f"Buscando ultimo cierre habil....")
             date = get_last_trading_close().date()
         else:
-            logger.info(f"Buscando datos para: {date}")
+            logger.info(f"Buscando datos para: {date}....")
         logger.info(f" -> Fecha a calcular {date}")
         if not get_a_validated_date(str(date)):
             raise ValueError(f"Invalid Date")
@@ -70,7 +78,14 @@ class ScoreCalculator:
             #print(f"Score antes del final: {score_final}")
         if total_weight != 1.0:
             raise ValueError(f"El resultado de la suma de los pesos no es 1.0 (actual: {total_weight})")
-        self._last_score = score_final / total_weight
+        score_final = score_final / total_weight
+        #self._last_score = score_final / total_weight
+        self._last_score = score_final
+        self._last_calculated_date = date
+
+        # Guardar en MarketReport
+        report = MarketReport()
+        report.set_data("score_calculator", round(score_final), str(date)) # El valor del calculo final
         return self._last_score
     
     @classmethod

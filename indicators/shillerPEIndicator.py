@@ -1,6 +1,7 @@
 from indicators.IndicatorModule import IndicatorModule
 from utils.file_downloader import download_latest_file
 from data.market_dates import yfinance_window_for_last_close
+from utils.MarketReport import MarketReport
 from dotenv import load_dotenv
 import yfinance as yf
 import os
@@ -16,19 +17,28 @@ start_date, end_date = yfinance_window_for_last_close()
 SYMBOL = "^SPX"
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 class ShillerPEIndicator(IndicatorModule):
     #Constructor
     def __init__(self):
         super().__init__()
-        self.cape_average = None # Para almacenar el promedio calculado
+        # Atributos para almacenar los resultados y la fecha de cálculo
+        self._last_calculated_date = None
+        self.cape_average = None
         self.daily_cape = None
         self.url = URL
         self.last_close = None
         self.promedio_cape_30 = None
         self.desv_cape_30 = None
 
+    def _is_cached(self, date):
+        # Verifica si los datos ya estan calculados para esta fecha
+        return self._last_calculated_date == date and self.daily_cape is not None
+
     def fetch_data(self, date):
+            # Comenzamos con la verificación en cache
+            if self._is_cached(date):
+                logger.info(f"[ShillerPE | FetchData] -> Datos ya calculados para {date}.... Usando la versión caché.")
+                return self.daily_cape
             logger.info(f" -> Fecha a usar: {date}")
             # Descargar el archivo mas reciente
             filepath = download_latest_file(base_url=URL, file_name=NAME, save_dir=PATH_DIR)
@@ -42,10 +52,15 @@ class ShillerPEIndicator(IndicatorModule):
 
             # Obtener el ultimo cierre de S&P 500
             last_close_spx = self.get_last_close(SYMBOL, date)
+            self.last_close = last_close_spx
             if last_close_spx is None or self.cape_average is None:
                 raise RuntimeError("Datos insuficientes para calcular CAPE diario")
 
             self.daily_cape = round(last_close_spx / self.cape_average, 2)
+            self._last_calculated_date = date # Marcar la fecha como calculada
+
+            # Guardar en MarketReport
+            self.set_report(date)
             return self.daily_cape
 
     def normalize(self, date):
@@ -60,10 +75,15 @@ class ShillerPEIndicator(IndicatorModule):
         return score
 
     def get_score(self, date):
-        if self.daily_cape is None or self.promedio_cape_30 is None or self.desv_cape_30 is None:
+        # Primero, asegurarnos de que los datos estén calculados.
+        if not self._is_cached(date):
+            logger.info(f"[ShillerPE | GetScore]: Calculando datos para {date}...")
             self.fetch_data(date)
-        value = self.normalize(date)
-        return round(value, 2)
+
+        # Ahora, normalizar los datos ya calculados.
+        normalized_score = self.normalize(date)
+        logger.info(f"Refactorización de Shiller -> {round(normalized_score, 2)}")
+        return round(normalized_score, 2)
     
     def _process_data(self, file_path):
         try:
@@ -115,6 +135,20 @@ class ShillerPEIndicator(IndicatorModule):
             print("❌ No se pudieron obtener datos del índice S&P 500")
             return None
         return float(data['Close'].iloc[0])
+    
+    def set_report(self, date):
+        report = MarketReport()
+        report.set_indicator_data(
+            "ShillerPEIndicator",
+                {
+                    "daily_cape": round(self.daily_cape, 2),
+                    "cape_average": round(self.cape_average, 2),
+                    "promedio_cape_30": round(self.promedio_cape_30, 2),
+                    "dev_cape_30": round(self.desv_cape_30),
+                    "url": self.url,
+                    "normalized_score": round(self.normalize(date), 2)
+                }, str(date)
+            )
 
 if __name__ == "__main__":
     try:

@@ -31,7 +31,7 @@ def test_fetch_data_error(fetch_error):
 def test_normalize_falla(fetch_error):
     fecha = date(2025, 12, 15)
     indicador = FearGreedIndicator(fetch_fn=fetch_error)
-    assert indicador.normalize(fecha) == 0
+    assert indicador.normalize(fecha) is None
 
 ######################### Test avanzados para FearGreedIndicator #########################
 
@@ -65,7 +65,7 @@ def test_normalize_con_valores_invalidos(valor_invalido):
     indicator = FearGreedIndicator(fetch_fn=fetch_mock)
 
     score = indicator.normalize(fecha)
-    assert score == 0
+    assert score is None
 
 # Valores validos esperados, dentro del rango
 @pytest.mark.parametrize("valor, esperado", [

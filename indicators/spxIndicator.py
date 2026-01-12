@@ -1,8 +1,8 @@
-from queue import Empty
 from indicators.IndicatorModule import IndicatorModule
 from config.config_loader import get_config
 import yfinance as yf
 import data.market_dates as md
+from utils.MarketReport import MarketReport
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,8 +25,16 @@ class SPXIndicator(IndicatorModule):
         self.lower_ratio = lower_ratio if lower_ratio is not None else spx_config.get('lower_ratio')
         self.sma_period = sma_period if sma_period is not None else spx_config.get('sma_period')
 
+        self._last_calculated_date = None
+        self.sma_value = None
+        self.last_close = None
+        self.ratio_normalize = None
+
         # Cliente yf mockeable
         self.yf_client = yf_client or yf
+
+    def _is_cached(self, date):
+        return self._last_calculated_date == date and self.sma_value is not None
     
 ### Metodo independiente para obtener el ultimo cierre ###
     def get_last_close(self, SIMBOL, date):
@@ -41,6 +49,7 @@ class SPXIndicator(IndicatorModule):
                 return None
             ultimo_cierre = float(datos['Close'].iloc[0])
             logger.info(f" -> Last Close: {ultimo_cierre}")
+            self.last_close = ultimo_cierre
             return ultimo_cierre
         except Exception as e:
             print(f"Error al obtener el ultimo cierre: {e}")
@@ -48,6 +57,9 @@ class SPXIndicator(IndicatorModule):
     
     def fetch_data(self, date):
         try:
+            if self._is_cached(date):
+                logger.info(f"Datos ya calculados para SMA-{periodo_sma}.... Usando caché")
+                return self.sma_value
             logger.info(f" -> Fecha a usar: {date}") # loggers unicamente son para debug visual
             ticker = self.yf_client.Ticker(SIMBOL)
             # Descargar 300 dias bursatiles para asegurar los dias por defecto
@@ -71,6 +83,9 @@ class SPXIndicator(IndicatorModule):
                 raise ValueError(f"Advertencia: Solo {available}/{self.sma_period} dias disponibles")
                 
             sma = cierres.tail(self.sma_period).mean()
+            self.sma_value = sma
+            self._last_calculated_date = date
+            self.set_report(date)
             return sma
 
         except Exception as e:
@@ -79,6 +94,9 @@ class SPXIndicator(IndicatorModule):
     
     def normalize(self, date):
         try:
+            if not self._is_cached(date):
+                logger.warning(f"[SPX | Normalize]: Recalculando....")
+                
             sma = self.fetch_data(date)
             # Validamos antes de hacer las operaciones
             if sma:
@@ -93,14 +111,30 @@ class SPXIndicator(IndicatorModule):
             ratio = (ultimo_cierre - sma) / sma
             # Evaluar y normalizar segun la formula
             if ratio <= self.lower_ratio:
-                return 1.0
+                ratio = 1.0
+                return ratio
             elif ratio >= self.upper_ratio:
-                return 0.0
+                ratio = 0.0
+                return ratio
             if self.lower_ratio < ratio < self.upper_ratio:
-                return (self.upper_ratio - ratio) / (self.upper_ratio - self.lower_ratio)
+                ratio = (self.upper_ratio - ratio) / (self.upper_ratio - self.lower_ratio)
+                return ratio
+            logger.warning(f"[SPX]: Ratio Value es: {ratio}")
+            self.ratio_normalize = ratio
         except Exception as e:
             print(f"Hubo un error al normalizar los valores: {e}")
             raise
+
+    def set_report(self, date):
+        report = MarketReport()
+        report.set_indicator_data("SPXIndicator",
+                {
+                    "sma_period": self.sma_period,
+                    "sma_value": round(self.sma_value, 2),
+                    "normalized_value": round(self.normalize(date), 2),
+                    "last_close": round(self.last_close, 2)
+                }, str(date)
+                )
     
 if __name__ == "__main__":
     try:
