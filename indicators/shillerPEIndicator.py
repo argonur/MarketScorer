@@ -47,8 +47,8 @@ class ShillerPEIndicator(IndicatorModule):
 
             # print(f"[Shiller]: Fecha a usar: {date}")
             # Proximamente los metodos 'process' deberán aceptar date para buscar por fecha
-            self._process_data(filepath)
-            self._process_data_30(filepath)
+            self._process_data(filepath, date)
+            self._process_data_30(filepath, date)
 
             # Obtener el ultimo cierre de S&P 500
             last_close_spx = self.get_last_close(SYMBOL, date)
@@ -85,56 +85,105 @@ class ShillerPEIndicator(IndicatorModule):
         logger.info(f"Refactorización de Shiller -> {round(normalized_score, 2)}")
         return round(normalized_score, 2)
     
-    def _process_data(self, file_path):
+    def _process_data(self, file_path, date=None):
         try:
             # Detectar extensión y elegir engine
             ext = str(file_path).split(".")[-1].lower()
             engine = "xlrd" if ext == "xls" else "openpyxl"
             # Leer el archivo
             df = pd.read_excel(file_path, sheet_name="Data", engine=engine)
-            # Leer la columna correspondiente
-            columna_10 = df.iloc[:, 10]
-            # Conersión y limpiesa de datos
-            columna_numerica = pd.to_numeric(columna_10, errors="coerce")
-            columna_limpia = columna_numerica.dropna()
-            # Obtener las ultimas X filas
-            val_obtenidos = columna_limpia.tail(MAX_VALUE)
-            # Se verifica que si haya datos suficientes
-            if len(val_obtenidos) < MAX_VALUE:
-                print(f"⚠️ Solo se encontraron {len(val_obtenidos)} valores válidos (se necesitan {MAX_VALUE}).")
-
-            if val_obtenidos.empty:
-                raise RuntimeError("Archivo Shiller PE no contiene datos válidos en la columna esperada")
-            
-            # Calcular promedio
-            self.cape_average = val_obtenidos.mean()   # Guardar el promedio en el atributo de clases
+            if date:
+                self.cape_average = self.calculate_cape_average(df, date, MAX_VALUE)
+            else:
+                # Leer la columna correspondiente
+                columna_10 = df.iloc[:, 10]
+                # Conersión y limpiesa de datos
+                columna_numerica = pd.to_numeric(columna_10, errors="coerce")
+                columna_limpia = columna_numerica.dropna()
+                # Obtener las ultimas X filas
+                val_obtenidos = columna_limpia.tail(MAX_VALUE)
+                # Se verifica que si haya datos suficientes
+                if len(val_obtenidos) < MAX_VALUE:
+                    print(f"⚠️ Solo se encontraron {len(val_obtenidos)} valores válidos (se necesitan {MAX_VALUE}).")
+                if val_obtenidos.empty:
+                    raise RuntimeError("Archivo Shiller PE no contiene datos válidos en la columna esperada")
+                # Calcular promedio
+                self.cape_average = val_obtenidos.mean()   # Guardar el promedio en el atributo de clases
         except Exception as e:
             raise RuntimeError(f"Error al procesar el archivo {file_path}: {e}")
     
-    def _process_data_30(self, file_path):
+    def _process_data_30(self, file_path, date=None):
         ext = str(file_path).split(".")[-1].lower()
         engine = "xlrd" if ext == "xls" else "openpyxl"
         df = pd.read_excel(file_path, sheet_name="Data", engine=engine)
-        columna_12 = pd.to_numeric(df.iloc[:, 12], errors="coerce").dropna()
-        val_obtenidos = columna_12.tail(360)
+        if date:
+            self.promedio_cape_30, self.desv_cape_30 = self.calculate_cape_30(df, date, 360)
+        else:    
+            columna_12 = pd.to_numeric(df.iloc[:, 12], errors="coerce").dropna()
+            val_obtenidos = columna_12.tail(360)
 
-        if len(val_obtenidos) < 360:
-            print(f"⚠️ Solo {len(val_obtenidos)} valores válidos (se necesitan 360)")
-        
-        if val_obtenidos.empty:
-            raise RuntimeError("Archivo Shiller PE no contiene datos válidos en la columna esperada")
+            if len(val_obtenidos) < 360:
+                print(f"⚠️ Solo {len(val_obtenidos)} valores válidos (se necesitan 360)")
+            
+            if val_obtenidos.empty:
+                raise RuntimeError("Archivo Shiller PE no contiene datos válidos en la columna esperada")
 
-        self.promedio_cape_30 = val_obtenidos.mean() if not val_obtenidos.empty else None
-        self.desv_cape_30 = val_obtenidos.std() if not val_obtenidos.empty else None
+            self.promedio_cape_30 = val_obtenidos.mean() if not val_obtenidos.empty else None
+            self.desv_cape_30 = val_obtenidos.std() if not val_obtenidos.empty else None
 
     def get_last_close(self, symbol, date):
         sp500 = yf.Ticker(symbol)
         logging.info(f"[Shiller]: Fecha para last_close: {date}")
-        data = sp500.history(start=start_date, end=end_date, auto_adjust=True)
+        data = sp500.history(start=date, end=end_date, auto_adjust=True)
         if data.empty:
             print("❌ No se pudieron obtener datos del índice S&P 500")
             return None
         return float(data['Close'].iloc[0])
+    
+    def parser_shiller_dates_searcher(self, df):
+        """1. Convertir la primera columna del archivo ShillerPE a datetime.
+            - El formato esperado es -> YYYY - MM
+        """
+        fechas = pd.to_datetime(df.iloc[:, 0].astype(str), format="%Y.%m", errors="coerce")
+        df = df.assign(fecha=fechas)
+        return df
+    
+    def filter_until_date(self, df, target_date):
+        """
+            - Filtrar el DateFrame hasta la fecha objetivo
+            - target_date debe ser datetime o string con un formato compatible
+        """
+        target = pd.to_datetime(target_date)
+        period = target.to_period("M")
+
+        # Si la fecha no es el ultimo dia del mes, retroceder un mes
+        if target.day != period.days_in_month:
+            period = period - 1
+        target_ts = period.to_timestamp(how="end")
+        logger.warning(f" -> Periodo de para el calculo ShillerPE: {period} <-")
+        return df[df["fecha"] <= target_ts]
+    
+    def extract_numeric_column(self, df, col_index, window_size):
+        """
+            Extraer una columna numerica del DataFrame, limpia los NaN y devuelve las ultimas `window_size` filas
+        """
+        col = pd.to_numeric(df.iloc[:, col_index], errors="coerce").dropna()
+        return col.tail(window_size)
+    
+    # Funciones especificas
+    def calculate_cape_average(self, df, target_date, max_value=120):
+        df = self.parser_shiller_dates_searcher(df)
+        df = self.filter_until_date(df, target_date)
+        values = self.extract_numeric_column(df, 10, max_value)
+        return values.mean() if not values.empty else None
+
+    def calculate_cape_30(self, df, target_date, window_size=360):
+        df = self.parser_shiller_dates_searcher(df)
+        df = self.filter_until_date(df, target_date)
+        values = self.extract_numeric_column(df, 12, window_size)
+        promedio = values.mean() if not values.empty else None
+        desv = values.std() if not values.empty else None
+        return promedio, desv
     
     def set_report(self, date):
         report = MarketReport()

@@ -74,8 +74,8 @@ def test_get_last_close_empty(mock_ticker, capsys):
 def test_fetch_data_calcula_daily_cape(mock_get_close, mock_process_30, mock_process, mock_download):
     fecha = date(2025, 12, 15)
     mock_download.return_value = "fake.xlsx"
-    mock_process.side_effect = lambda filepath: setattr(indicator, "cape_average", 25.0)
-    mock_process_30.side_effect = lambda filepath: setattr(indicator, "promedio_cape_30", 20.0) or setattr(indicator, "desv_cape_30", 5.0)
+    mock_process.side_effect = lambda filepath, d: setattr(indicator, "cape_average", 25.0)
+    mock_process_30.side_effect = lambda filepath, d: setattr(indicator, "promedio_cape_30", 20.0) or setattr(indicator, "desv_cape_30", 5.0)
     mock_get_close.return_value = 5000.0
 
     indicator = ShillerPEIndicator()
@@ -103,11 +103,11 @@ def test_fetch_data_downloads_and_processes(indicator, mock_yf):
          patch.object(indicator, '_process_data_30') as mock_process_30, \
          patch.object(indicator, 'get_last_close', return_value=4800.0):
 
-        mock_process.side_effect = lambda filepath: setattr(indicator, "cape_average", 30.0)
-        mock_process_30.side_effect = lambda filepath: setattr(indicator, "promedio_cape_30", 25.0) or setattr(indicator, "desv_cape_30", 5.0)
+        mock_process.side_effect = lambda filepath, d: setattr(indicator, "cape_average", 30.0)
+        mock_process_30.side_effect = lambda filepath, d: setattr(indicator, "promedio_cape_30", 25.0) or setattr(indicator, "desv_cape_30", 5.0)
 
         indicator.fetch_data(fecha)
-        mock_process.assert_called_once_with(TEST_FILE_PATH)
+        mock_process.assert_called_once_with(TEST_FILE_PATH, fecha)
         assert indicator.daily_cape == pytest.approx(160.0)
 
 # ---------- Test normalize ----------
