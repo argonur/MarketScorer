@@ -108,13 +108,17 @@ def test_normalize_limte_inferior(mock_yf_client):
     client, ticker_instance = mock_yf_client
 
     def fake_history(*args, **kwargs):
-        if "period" in kwargs:
-            return pd.DataFrame({'Close': [100]*300})
-        else:
-            return pd.DataFrame({'Close': [80]})
+        # get_last_close: history(start=..., end=..., auto_adjust=True)
+        if kwargs.get("auto_adjust", False):
+            return pd.DataFrame({'Close': [80]})  # ratio = (80-100)/100 = -0.20 => 1.0
+        # fetch_data: history(start=..., end=...)
+        if "start" in kwargs and "end" in kwargs:
+            return pd.DataFrame({'Close': [100, 100, 100, 100, 100]})  # SMA = 100
+        # fallback (no debería usarse)
+        return pd.DataFrame()
 
     ticker_instance.history.side_effect = fake_history
-    indicador = SPXIndicator(sma_period=5, upper_ratio=.02, lower_ratio=-0.2, yf_client=client)
+    indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
 
     assert indicador.normalize(fecha) == 1.0
 
@@ -123,13 +127,16 @@ def test_normalize_limite_superior(mock_yf_client):
     client, ticker_instance = mock_yf_client
 
     def fake_history(*args, **kwargs):
-        if "period" in kwargs:
-            return pd.DataFrame({'Close': [100]*300})
-        else:
-            return pd.DataFrame({'Close': [120]})
+        # get_last_close
+        if kwargs.get("auto_adjust", False):
+            return pd.DataFrame({'Close': [120]})  # ratio = (120-100)/100 = 0.20 => 0.0
+        # fetch_data
+        if "start" in kwargs and "end" in kwargs:
+            return pd.DataFrame({'Close': [100, 100, 100, 100, 100]})
+        return pd.DataFrame()
 
     ticker_instance.history.side_effect = fake_history
-    indicador = SPXIndicator(sma_period=5, upper_ratio=.02, lower_ratio=-0.2, yf_client=client)
+    indicador = SPXIndicator(sma_period=5, upper_ratio=0.2, lower_ratio=-0.2, yf_client=client)
 
     assert indicador.normalize(fecha) == 0.0
 
@@ -163,10 +170,13 @@ def test_normalize_middle_value(mock_yf_client):
     client, ticker_instance = mock_yf_client
 
     def fake_history(*args, **kwargs):
-        if "period" in kwargs:
-            return pd.DataFrame({'Close': [100]*300})
-        else:
-            return pd.DataFrame({'Close': [105]})
+        # get_last_close
+        if kwargs.get("auto_adjust", False):
+            return pd.DataFrame({'Close': [105]})  # ratio = (105-100)/100 = 0.05 => valor intermedio
+        # fetch_data
+        if "start" in kwargs and "end" in kwargs:
+            return pd.DataFrame({'Close': [100, 100, 100, 100, 100]})
+        return pd.DataFrame()
 
     ticker_instance.history.side_effect = fake_history
     indicador = SPXIndicator(
