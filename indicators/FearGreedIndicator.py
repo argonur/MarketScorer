@@ -1,6 +1,9 @@
 from fear_and_greed import get as get_fear_greed_current
 from utils.MarketReport import MarketReport
 from indicators.IndicatorModule import IndicatorModule
+from datetime import datetime
+import data.market_dates as md
+import utils.cnn_feargreed_loader as cnnfgl
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -24,10 +27,11 @@ class FearGreedIndicator(IndicatorModule):
     def fetch_data(self, date): 
         try:
             if self._is_cached(date):
-                logger.info(f"Datos ya calculados para {date}.... Usando caché")
+                #logger.info(f"Datos ya calculados para {date}.... Usando caché")
                 return self.fgi_value
             logger.info(f" -> Fecha a usar: {date}")
-            fgi = self.fetch_fn()
+            fgi = cnnfgl.get_value_by_date(date)
+            self.fgi_value = fgi
             if not (0 <= fgi.value <= 100):
                 raise ValueError(f"Valor fuera de rango esperado: {fgi.value}")
             self.fgi_value = fgi
@@ -43,7 +47,7 @@ class FearGreedIndicator(IndicatorModule):
         try:
             # Asumimos que los datos ya están calculados por fetch_data()
             if not self._is_cached(date):
-                logger.warning(f"[FG | Normalize]: Recalculando.....")
+            #    logger.warning(f"[FG | Normalize]: Recalculando.....")
                 self.fetch_data(date)  # ✅ Llamamos a fetch_data() una sola vez
 
             # Validamos los datos
