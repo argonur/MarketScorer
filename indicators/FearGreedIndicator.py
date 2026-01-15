@@ -3,7 +3,7 @@ from utils.MarketReport import MarketReport
 from indicators.IndicatorModule import IndicatorModule
 from datetime import datetime
 import data.market_dates as md
-import utils.cnn_feargreed_loader as cnnfgl
+from utils.cnn_feargreed_loader import get_value_by_date
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -30,13 +30,12 @@ class FearGreedIndicator(IndicatorModule):
                 #logger.info(f"Datos ya calculados para {date}.... Usando caché")
                 return self.fgi_value
             logger.info(f" -> Fecha a usar: {date}")
-            fgi = cnnfgl.get_value_by_date(date)
+            fgi = get_value_by_date(date)
             self.fgi_value = fgi
-            if not (0 <= fgi.value <= 100):
+            # Validación para evitar datos fuera de rango
+            if not (0 <= fgi.value.value <= 100):
                 raise ValueError(f"Valor fuera de rango esperado: {fgi.value}")
-            self.fgi_value = fgi
             self._last_calculated_date = date
-            logger.info(f"[FG] Valor Crudo -> {round(fgi.value)}")
             self.set_report(date)
             return fgi
         except Exception as e: 
@@ -69,7 +68,7 @@ class FearGreedIndicator(IndicatorModule):
                 {
                     "raw_value": round(self.fgi_value.value),
                     "raw_description": self.fgi_value.description,
-                    "normalized_value": self.fg_normalized,
+                    "normalized_value": self.normalize(date),
                 }, str(date)
                 )
 
