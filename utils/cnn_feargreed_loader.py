@@ -63,7 +63,7 @@ def get_value_by_date(date: Union[datetime.date, str]) -> Optional[FearGreedReco
         
         # Buscar la fila que coincide con la fecha
         for rec in records:
-            rec_date = datetime.datetime.utcfromtimestamp(rec["x"] / 1000).date()
+            rec_date = datetime.datetime.fromtimestamp(rec["x"] / 1000, datetime.UTC).date()
             if rec_date == date:
                 return FearGreedRecord(
                     value=int(rec["y"]),
@@ -76,14 +76,14 @@ def get_value_by_date(date: Union[datetime.date, str]) -> Optional[FearGreedReco
         min_diff = float('inf')
         
         for rec in records:
-            rec_date = datetime.datetime.utcfromtimestamp(rec["x"] / 1000).date()
+            rec_date = datetime.datetime.fromtimestamp(rec["x"] / 1000, datetime.UTC).date()
             diff = abs((rec_date - date).days)
             if diff < min_diff:
                 min_diff = diff
                 closest_record = rec
         
         if closest_record:
-            rec_date = datetime.datetime.utcfromtimestamp(closest_record["x"] / 1000).date()
+            rec_date = datetime.datetime.fromtimestamp(closest_record["x"] / 1000, datetime.UTC).date()
             return FearGreedRecord(
                 value=int(closest_record["y"]),
                 description=closest_record.get("rating", ""),
