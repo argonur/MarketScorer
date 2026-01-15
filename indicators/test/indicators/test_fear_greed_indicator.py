@@ -102,9 +102,6 @@ def test_normalize_con_valores_invalidos(valor_invalido):
 
         # fetch_data debería haberse llamado
         mock_fetch_data_method.assert_called_once_with(fecha)
-        # fetch_data retornó None, por lo tanto, fgi_value sigue siendo None (o fetch_data no lo cambió)
-        # La verificación `if self.fgi_value is None` dentro de normalize (después de fetch_data)
-        # debería evaluar a True y lanzar ValueError, que es capturado por el except y retorna None
         assert score is None
 
 # Valores validos esperados, dentro del rango
