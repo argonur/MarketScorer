@@ -11,11 +11,11 @@ logger = logging.getLogger(__name__)
 
 # Constructor de la clase FearGreedIndicator, tambien se le conoce como argumentos de funcion
 class FearGreedIndicator(IndicatorModule):
-    def __init__(self, fetch_fn=get_fear_greed_current):
+    def __init__(self, fetch_fn=None):
         """ Inyección de dependencia:
         - fetch_fn -> Función externa que retorna el valor de fgi
         """
-        self.fetch_fn = fetch_fn
+        self.fetch_fn = fetch_fn if fetch_fn else get_value_by_date
         self._last_calculated_date = None
         self.fgi_value = None
         self.fg_normalized = None
@@ -30,10 +30,10 @@ class FearGreedIndicator(IndicatorModule):
                 #logger.info(f"Datos ya calculados para {date}.... Usando caché")
                 return self.fgi_value
             logger.info(f" -> Fecha a usar: {date}")
-            fgi = get_value_by_date(date)
+            fgi = self.fetch_fn(date)
             self.fgi_value = fgi
             # Validación para evitar datos fuera de rango
-            if not (0 <= fgi.value.value <= 100):
+            if not (0 <= fgi.value <= 100):
                 raise ValueError(f"Valor fuera de rango esperado: {fgi.value}")
             self._last_calculated_date = date
             self.set_report(date)
@@ -47,7 +47,9 @@ class FearGreedIndicator(IndicatorModule):
             # Asumimos que los datos ya están calculados por fetch_data()
             if not self._is_cached(date):
             #    logger.warning(f"[FG | Normalize]: Recalculando.....")
-                self.fetch_data(date)  # ✅ Llamamos a fetch_data() una sola vez
+                result = self.fetch_data(date)  # ✅ Llamamos a fetch_data() una sola vez
+                if result is None:
+                    logger.warning(f"No se pudieorn obtener datos para normalizar en la fecha: {date}")
 
             # Validamos los datos
             if self.fgi_value is None or self.fgi_value.value is None:
