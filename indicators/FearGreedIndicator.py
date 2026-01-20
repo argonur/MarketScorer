@@ -3,7 +3,7 @@ from utils.MarketReport import MarketReport
 from indicators.IndicatorModule import IndicatorModule
 from datetime import datetime
 import data.market_dates as md
-from utils.cnn_feargreed_loader import get_value_by_date
+from utils.cnn_feargreed_loader import get_value_by_date, DateOutOfRangeError
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -32,15 +32,18 @@ class FearGreedIndicator(IndicatorModule):
             logger.info(f" -> Fecha a usar: {date}")
             fgi = self.fetch_fn(date)
             self.fgi_value = fgi
+            logger.warning(f"Valor FG Crudo: {fgi.value}")
             # Validación para evitar datos fuera de rango
             if not (0 <= fgi.value <= 100):
                 raise ValueError(f"Valor fuera de rango esperado: {fgi.value}")
             self._last_calculated_date = date
             self.set_report(date)
             return fgi
-        except Exception as e: 
-            print(f"Error al obtener el valor actual: {e}") 
-        return None 
+        except DateOutOfRangeError as e: 
+            print(f"Fecha fuera de rango para Fear & Greed: {date}. Error: {e}") 
+            return None
+        except Exception as e:
+            logger.info(f"Error al obtener el valor para la fecha {date}: {e}")
     
     def normalize(self, date):
         try:
