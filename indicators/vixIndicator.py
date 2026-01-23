@@ -45,15 +45,12 @@ class VixIndicator(IndicatorModule):
     def fetch_data(self, date) -> float | None:
         try:
             if self._is_cached(date):
-                logger.info(f"[Vix]: Datos ya calculados para {date}..... Usando caché")
                 return self._last_close
-            logger.info(f" -> Fecha a usar: {date}")
             start_date, end_date = md.yfinance_window_for_last_close()
             last_close = self.get_last_close(start_date, end_date, date)
             if last_close is None:
                 raise ValueError("No se obtuvieron datos de cierre")
             
-            logger.info(f"[Vix] -> Ultimo cierre: {last_close}") # Logs temporales
             self._last_close = last_close
             self._last_calculated_date = date
             self.set_report(date)
@@ -65,7 +62,6 @@ class VixIndicator(IndicatorModule):
     def normalize(self, date):
         try:
             if self._is_cached(date):
-                logger.warning(f"[Vix | Normalize]: Recalculando.....")
                 vix_actual = self._last_close
             else:
                 vix_actual = self.fetch_data(date)
@@ -84,7 +80,6 @@ class VixIndicator(IndicatorModule):
             # Aplicamos la formula para obtener el score final
             score = (vix_actual - self.vix_min) / (self.vix_max - self.vix_min)
             self._normalized = round(score, 2)
-            logger.info(f"Desde Normalize: {self._normalized}")
             return round(score, 2)
         except Exception as e:
             print(f"░ Normalize: {e}")

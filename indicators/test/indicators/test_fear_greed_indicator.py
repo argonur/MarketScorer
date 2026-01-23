@@ -133,13 +133,6 @@ def test_normalize_valor_medio():
 
 ########## Tests opcionales/temporales para los loggers ##########
 
-def test_logger_info_en_fetch_data(fetch_ok, caplog):
-    fecha = date(2025, 12, 15)
-    indicator = FearGreedIndicator(fetch_fn=fetch_ok)
-    with caplog.at_level("INFO"):
-        indicator.fetch_data(fecha)
-    assert any("Fecha a usar" in message for message in caplog.messages)
-
 # --- Test de caché ---
 
 def test_fetch_data_cache_hit():

@@ -37,16 +37,12 @@ class ShillerPEIndicator(IndicatorModule):
     def fetch_data(self, date):
             # Comenzamos con la verificación en cache
             if self._is_cached(date):
-                logger.info(f"[ShillerPE | FetchData] -> Datos ya calculados para {date}.... Usando la versión caché.")
                 return self.daily_cape
-            logger.info(f" -> Fecha a usar: {date}")
             # Descargar el archivo mas reciente
             filepath = download_latest_file(base_url=URL, file_name=NAME, save_dir=PATH_DIR)
             if not filepath:
                 raise RuntimeError("No se pudo descargar el archivo Shiller PE")
 
-            # print(f"[Shiller]: Fecha a usar: {date}")
-            # Proximamente los metodos 'process' deberán aceptar date para buscar por fecha
             self._process_data(filepath, date)
             self._process_data_30(filepath, date)
 
@@ -77,12 +73,10 @@ class ShillerPEIndicator(IndicatorModule):
     def get_score(self, date):
         # Primero, asegurarnos de que los datos estén calculados.
         if not self._is_cached(date):
-            logger.info(f"[ShillerPE | GetScore]: Calculando datos para {date}...")
             self.fetch_data(date)
 
         # Ahora, normalizar los datos ya calculados.
         normalized_score = self.normalize(date)
-        logger.info(f"Refactorización de Shiller -> {round(normalized_score, 2)}")
         return round(normalized_score, 2)
     
     def _process_data(self, file_path, date=None):
@@ -133,7 +127,6 @@ class ShillerPEIndicator(IndicatorModule):
 
     def get_last_close(self, symbol, date):
         sp500 = yf.Ticker(symbol)
-        logging.info(f"[Shiller]: Fecha para last_close: {date}")
         data = sp500.history(start=date, end=end_date, auto_adjust=True)
         if data.empty:
             print("❌ No se pudieron obtener datos del índice S&P 500")
@@ -160,7 +153,6 @@ class ShillerPEIndicator(IndicatorModule):
         if target.day != period.days_in_month:
             period = period - 1
         target_ts = period.to_timestamp(how="end")
-        logger.warning(f" -> Periodo de para el calculo ShillerPE: {period} <-")
         return df[df["fecha"] <= target_ts]
     
     def extract_numeric_column(self, df, col_index, window_size):

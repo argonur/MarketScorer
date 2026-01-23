@@ -41,7 +41,6 @@ class SPXIndicator(IndicatorModule):
     def get_last_close(self, SIMBOL, date):
         # Metodo para obtener el valor del ultimo cierre del indice S&P 500
         try:
-            logger.info(F" -> Fecha last_close: {date}")
             sp500 = self.yf_client.Ticker(SIMBOL)
             datos = sp500.history(start=date, end=end_date, auto_adjust=True)
 
@@ -49,7 +48,6 @@ class SPXIndicator(IndicatorModule):
                 print("No se obtuvieron datos para el S&P 500.")
                 return None
             ultimo_cierre = float(datos['Close'].iloc[0])
-            logger.info(f" -> Last Close: {ultimo_cierre} en {date}")
             self.last_close = ultimo_cierre
             return ultimo_cierre
         except Exception as e:
@@ -75,9 +73,7 @@ class SPXIndicator(IndicatorModule):
     def fetch_data(self, date):
         try:
             if self._is_cached(date):
-                logger.info(f"Datos ya calculados para SMA-{periodo_sma}.... Usando caché")
                 return self.sma_value
-            logger.info(f" -> Fecha a usar: {date}") # loggers unicamente son para debug visual
             f_inicio, f_fin = self.get_backtesting_date_range_sma(date)
             ticker = self.yf_client.Ticker(SIMBOL)
             # Descargar 300 dias bursatiles para asegurar los dias por defecto
@@ -113,7 +109,7 @@ class SPXIndicator(IndicatorModule):
     def normalize(self, date):
         try:
             if not self._is_cached(date):
-                logger.warning(f"[SPX | Normalize]: Recalculando....")
+                pass
                 
             sma = self.fetch_data(date)
             # Validamos antes de hacer las operaciones
@@ -137,7 +133,6 @@ class SPXIndicator(IndicatorModule):
             if self.lower_ratio < ratio < self.upper_ratio:
                 ratio = (self.upper_ratio - ratio) / (self.upper_ratio - self.lower_ratio)
                 return ratio
-            logger.warning(f"[SPX]: Ratio Value es: {ratio}")
             self.ratio_normalize = ratio
         except Exception as e:
             print(f"Hubo un error al normalizar los valores: {e}")

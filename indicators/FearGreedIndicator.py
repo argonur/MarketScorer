@@ -27,12 +27,9 @@ class FearGreedIndicator(IndicatorModule):
     def fetch_data(self, date): 
         try:
             if self._is_cached(date):
-                #logger.info(f"Datos ya calculados para {date}.... Usando caché")
                 return self.fgi_value
-            logger.info(f" -> Fecha a usar: {date}")
             fgi = self.fetch_fn(date)
             self.fgi_value = fgi
-            logger.warning(f"Valor FG Crudo: {fgi.value}")
             # Validación para evitar datos fuera de rango
             if not (0 <= fgi.value <= 100):
                 raise ValueError(f"Valor fuera de rango esperado: {fgi.value}")
@@ -49,8 +46,7 @@ class FearGreedIndicator(IndicatorModule):
         try:
             # Asumimos que los datos ya están calculados por fetch_data()
             if not self._is_cached(date):
-            #    logger.warning(f"[FG | Normalize]: Recalculando.....")
-                result = self.fetch_data(date)  # ✅ Llamamos a fetch_data() una sola vez
+                result = self.fetch_data(date)
                 if result is None:
                     logger.warning(f"No se pudieorn obtener datos para normalizar en la fecha: {date}")
 
