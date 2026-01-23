@@ -123,7 +123,6 @@ class TelegramNotifier:
 
             # - ScoreCalculator
             score_data = data.get("score_calculator", {})
-            score_date = score_data.get("date", "")
             score_final = score_data.get("value", float('nan'))
 
             # - Formato del mensaje
