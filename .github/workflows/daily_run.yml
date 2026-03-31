@@ -10,7 +10,7 @@ on:
     - cron: "30 06 * * 2-6" # Daily at 06:30 AM UTC
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   test:
